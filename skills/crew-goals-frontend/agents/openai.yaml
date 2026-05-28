@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crew Goals Frontend"
+  short_description: "Frontend standards for the Crew Goals project"
+  default_prompt: "Use $crew-goals-frontend to implement or review Crew Goals frontend work in this repository."

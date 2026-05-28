@@ -1,0 +1,2406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crew Goals MVP</title>
+  <style>
+    @font-face {
+      font-family: "Proxima Nova";
+      src: url("fonts/Proxima Nova Reg.otf") format("opentype");
+      font-weight: 400;
+    }
+
+    @font-face {
+      font-family: "Proxima Nova";
+      src: url("fonts/Proxima Nova Sbold.otf") format("opentype");
+      font-weight: 600;
+    }
+
+    :root {
+      --base-white: #ffffff;
+      --base-black: #000000;
+      --grey-50: #f7f8f8;
+      --grey-100: #f1f3f4;
+      --grey-125: #eceeef;
+      --grey-200: #d8dbdd;
+      --grey-300: #aeb4b8;
+      --grey-400: #6f767b;
+      --grey-500: #1f2427;
+      --suunto-500: #16b4ea;
+      --running: #ffc221;
+      --green: #23b35b;
+      --orange: #ff7c3b;
+      --red: #ff4747;
+      --purple: #8e5ce6;
+      --route: #2c8fbd;
+      --text-icon-primary: var(--grey-500);
+      --text-icon-secondary: var(--grey-400);
+      --text-icon-disabled: var(--grey-300);
+      --text-icon-inverted: var(--base-white);
+      --app-background-default: var(--base-white);
+      --app-background-toned: var(--grey-50);
+      --surface-default: var(--base-white);
+      --surface-subtle-1: #f2f4f5;
+      --surface-subtle-2: var(--grey-125);
+      --surface-dark: #172023;
+      --surface-forest: #26362f;
+      --border-default: var(--grey-125);
+      --border-strong-1: var(--grey-200);
+      --action-background-brand-primary: var(--suunto-500);
+      --space-xs: 2px;
+      --space-s: 4px;
+      --space-m: 8px;
+      --space-l: 12px;
+      --space-xl: 16px;
+      --space-2xl: 24px;
+      --space-3xl: 32px;
+      --radius-xs: 4px;
+      --radius-m: 8px;
+      --radius-l: 12px;
+      --radius-pill: 999px;
+      font-family: "Proxima Nova", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+      letter-spacing: 0;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #dfe4e7;
+      color: var(--text-icon-primary);
+      font-family: "Proxima Nova", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .phone {
+      position: relative;
+      width: min(100vw, 390px);
+      height: min(100vh, 844px);
+      min-height: 720px;
+      background: var(--app-background-toned);
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .status {
+      height: 42px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      padding: 0 var(--space-xl) var(--space-m);
+      background: var(--surface-default);
+      color: var(--text-icon-primary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .appbar {
+      height: 52px;
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      align-items: center;
+      gap: var(--space-m);
+      padding: 0 var(--space-xl);
+      background: var(--surface-default);
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .appbar h1 {
+      margin: 0;
+      min-width: 0;
+      overflow: hidden;
+      text-align: center;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 18px;
+      line-height: 22px;
+      font-weight: 600;
+    }
+
+    .icon-button {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: var(--radius-pill);
+      background: var(--surface-subtle-1);
+      color: var(--text-icon-primary);
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .icon-button.ghost {
+      background: transparent;
+    }
+
+    main {
+      height: calc(100% - 42px - 52px);
+      overflow: auto;
+      padding: var(--space-l) var(--space-xl) 92px;
+      scroll-behavior: smooth;
+    }
+
+    .stack {
+      display: grid;
+      gap: var(--space-l);
+    }
+
+    .section {
+      display: grid;
+      gap: var(--space-l);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-l);
+      min-height: 24px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .section-title span:last-child {
+      color: var(--text-icon-secondary);
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .card {
+      background: var(--surface-default);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-m);
+      padding: var(--space-xl);
+    }
+
+    .route-card {
+      position: relative;
+      min-height: 246px;
+      overflow: hidden;
+      color: var(--text-icon-inverted);
+      background:
+        linear-gradient(150deg, rgba(10, 16, 18, 0.1), rgba(10, 16, 18, 0.86)),
+        linear-gradient(135deg, var(--surface-dark), var(--surface-forest));
+      border: 0;
+      display: grid;
+      align-content: space-between;
+      gap: var(--space-l);
+    }
+
+    .route-card svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.96;
+    }
+
+    .route-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: var(--space-l);
+    }
+
+    .eyebrow {
+      color: var(--text-icon-secondary);
+      font-size: 11px;
+      line-height: 14px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .route-card .eyebrow,
+    .route-card .muted {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .route-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: var(--space-l);
+    }
+
+    .route-head h2,
+    .page-title {
+      margin: 0;
+      font-size: 25px;
+      line-height: 30px;
+      font-weight: 600;
+    }
+
+    .page-title {
+      color: var(--text-icon-primary);
+    }
+
+    .large-number {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-s);
+      white-space: nowrap;
+      font-size: 38px;
+      line-height: 42px;
+      font-weight: 600;
+    }
+
+    .large-number small {
+      font-size: 15px;
+      line-height: 18px;
+      font-weight: 400;
+    }
+
+    .status-pill,
+    .tiny-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      max-width: 100%;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.14);
+      color: inherit;
+      padding: 4px 10px;
+      white-space: nowrap;
+      font-size: 11px;
+      line-height: 14px;
+      font-weight: 600;
+    }
+
+    .tiny-pill {
+      background: var(--surface-subtle-1);
+      color: var(--text-icon-secondary);
+    }
+
+    .tiny-pill.blue {
+      background: rgba(22, 180, 234, 0.12);
+      color: #067fb0;
+    }
+
+    .tiny-pill.green {
+      background: rgba(35, 179, 91, 0.12);
+      color: #11753a;
+    }
+
+    .tiny-pill.yellow {
+      background: rgba(255, 194, 33, 0.22);
+      color: #7d5a00;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-m);
+    }
+
+    .metric {
+      min-height: 74px;
+      display: grid;
+      align-content: center;
+      gap: var(--space-s);
+      background: var(--surface-subtle-1);
+      border-radius: var(--radius-m);
+      padding: var(--space-l);
+    }
+
+    .metric strong {
+      overflow-wrap: anywhere;
+      font-size: 20px;
+      line-height: 24px;
+      font-weight: 600;
+    }
+
+    .metric span,
+    .muted {
+      color: var(--text-icon-secondary);
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .route-card .metric {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .route-card .metric span {
+      color: rgba(255, 255, 255, 0.68);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-m);
+    }
+
+    .button-row.single {
+      grid-template-columns: 1fr;
+    }
+
+    .btn {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-m);
+      border: 0;
+      border-radius: var(--radius-m);
+      padding: 0 var(--space-xl);
+      color: var(--text-icon-primary);
+      background: var(--surface-subtle-1);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .btn.primary {
+      color: var(--text-icon-inverted);
+      background: var(--action-background-brand-primary);
+    }
+
+    .btn.dark {
+      color: var(--text-icon-inverted);
+      background: var(--text-icon-primary);
+    }
+
+    .btn[disabled],
+    .btn.disabled {
+      color: var(--text-icon-disabled);
+      background: var(--surface-subtle-2);
+      cursor: not-allowed;
+    }
+
+    .progress-line {
+      height: 8px;
+      overflow: hidden;
+      border-radius: var(--radius-pill);
+      background: var(--surface-subtle-2);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: var(--progress, 0%);
+      border-radius: inherit;
+      background: var(--action-background-brand-primary);
+    }
+
+    .route-card .progress-line {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .route-card .progress-fill {
+      background: var(--running);
+    }
+
+    .row-list {
+      display: grid;
+      gap: var(--space-m);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: var(--space-l);
+      min-height: 54px;
+    }
+
+    .row.compact {
+      grid-template-columns: 34px 1fr auto;
+      min-height: 44px;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      color: var(--text-icon-inverted);
+      background: var(--avatar, var(--suunto-500));
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .row.compact .avatar {
+      width: 34px;
+      height: 34px;
+      font-size: 11px;
+    }
+
+    .row-main {
+      min-width: 0;
+      display: grid;
+      gap: 3px;
+    }
+
+    .row-main strong,
+    .row-main span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .row-main strong {
+      font-size: 14px;
+      line-height: 18px;
+      font-weight: 600;
+    }
+
+    .row-main span {
+      color: var(--text-icon-secondary);
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .distance {
+      text-align: right;
+      white-space: nowrap;
+      font-size: 15px;
+      line-height: 18px;
+      font-weight: 600;
+    }
+
+    .avatar-stack {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .avatar-stack .avatar {
+      width: 30px;
+      height: 30px;
+      margin-left: -8px;
+      border: 2px solid var(--surface-default);
+      font-size: 10px;
+    }
+
+    .avatar-stack .avatar:first-child {
+      margin-left: 0;
+    }
+
+    .search {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-m);
+      background: var(--surface-default);
+      color: var(--text-icon-primary);
+      padding: 0 var(--space-xl);
+      outline: 0;
+    }
+
+    .search:focus {
+      border-color: var(--action-background-brand-primary);
+    }
+
+    .choice-list {
+      display: grid;
+      gap: var(--space-m);
+    }
+
+    .choice {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: var(--space-l);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-m);
+      background: var(--surface-default);
+      color: var(--text-icon-primary);
+      padding: var(--space-xl);
+      text-align: left;
+    }
+
+    .choice.active {
+      border-color: var(--action-background-brand-primary);
+      box-shadow: inset 0 0 0 1px var(--action-background-brand-primary);
+    }
+
+    .choice strong {
+      display: block;
+      margin-bottom: var(--space-s);
+      font-size: 15px;
+      line-height: 18px;
+    }
+
+    .step-list {
+      display: grid;
+      gap: var(--space-l);
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      align-items: start;
+      gap: var(--space-l);
+    }
+
+    .step-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-pill);
+      background: var(--surface-subtle-1);
+      color: var(--text-icon-primary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .empty {
+      min-height: 188px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: var(--space-l);
+      text-align: center;
+    }
+
+    .empty-mark {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--surface-subtle-1);
+      color: var(--action-background-brand-primary);
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .activity-card {
+      display: grid;
+      gap: var(--space-l);
+      background: var(--surface-default);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-m);
+      padding: var(--space-xl);
+    }
+
+    .activity-head {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-l);
+    }
+
+    .activity-head h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 26px;
+      font-weight: 600;
+    }
+
+    .activity-map {
+      position: relative;
+      min-height: 150px;
+      overflow: hidden;
+      border-radius: var(--radius-m);
+      background:
+        linear-gradient(135deg, rgba(255, 194, 33, 0.14), rgba(22, 180, 234, 0.14)),
+        #e9eef0;
+    }
+
+    .activity-map svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .notice {
+      display: grid;
+      gap: var(--space-m);
+      border-radius: var(--radius-m);
+      padding: var(--space-xl);
+      background: var(--surface-subtle-1);
+      border: 1px solid var(--border-default);
+    }
+
+    .notice.success {
+      background: rgba(35, 179, 91, 0.1);
+      border-color: rgba(35, 179, 91, 0.22);
+    }
+
+    .notice.attention {
+      background: rgba(255, 194, 33, 0.12);
+      border-color: rgba(255, 194, 33, 0.28);
+    }
+
+    .result-hero {
+      min-height: 232px;
+      align-content: center;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .result-hero .large-number {
+      font-size: 46px;
+      line-height: 50px;
+    }
+
+    .bottom-nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-s);
+      padding: var(--space-m) var(--space-l) var(--space-l);
+      background: rgba(255, 255, 255, 0.94);
+      border-top: 1px solid var(--border-default);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-item {
+      display: grid;
+      place-items: center;
+      gap: var(--space-xs);
+      border: 0;
+      background: transparent;
+      color: var(--text-icon-secondary);
+      font-size: 10px;
+      line-height: 12px;
+      text-decoration: none;
+    }
+
+    .nav-icon {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: inherit;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: var(--surface-brand-primary, var(--suunto-500));
+      font-weight: 600;
+    }
+
+    .toast {
+      position: absolute;
+      left: var(--space-xl);
+      right: var(--space-xl);
+      bottom: 78px;
+      z-index: 20;
+      display: none;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-m);
+      color: var(--text-icon-inverted);
+      background: rgba(31, 36, 39, 0.94);
+      padding: var(--space-l) var(--space-xl);
+      text-align: center;
+      font-size: 13px;
+      line-height: 17px;
+    }
+
+    .toast.show {
+      display: flex;
+    }
+
+    .sheet {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: end;
+      background: rgba(31, 36, 39, 0.28);
+    }
+
+    .sheet.show {
+      display: flex;
+    }
+
+    .sheet-panel {
+      width: 100%;
+      display: grid;
+      gap: var(--space-l);
+      border-radius: 12px 12px 0 0;
+      background: var(--surface-default);
+      padding: var(--space-xl) var(--space-xl) calc(var(--space-xl) + 8px);
+      border-top: 1px solid var(--border-default);
+    }
+
+    .share-preview {
+      overflow: hidden;
+      border-radius: var(--radius-m);
+      color: var(--text-icon-inverted);
+      background:
+        linear-gradient(150deg, rgba(10, 16, 18, 0.08), rgba(10, 16, 18, 0.9)),
+        linear-gradient(135deg, var(--surface-dark), var(--surface-forest));
+      padding: var(--space-xl);
+    }
+
+    .rule-list {
+      display: grid;
+      gap: var(--space-m);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rule-list li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: var(--space-m);
+      align-items: start;
+      color: var(--text-icon-secondary);
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .rule-list li::before {
+      content: "✓";
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      color: #067fb0;
+      background: rgba(22, 180, 234, 0.12);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 390px) {
+      body {
+        display: block;
+        background: var(--app-background-toned);
+      }
+
+      .phone {
+        width: 100vw;
+        height: 100vh;
+        min-height: 100vh;
+        border: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="status">
+      <span>9:41</span>
+      <span>LTE 82%</span>
+    </div>
+    <div class="appbar" id="appbar"></div>
+    <main id="app"></main>
+    <nav class="bottom-nav" aria-label="Primary">
+      <button class="nav-item" type="button" data-route="home" title="Home">
+        <span class="nav-icon">⌂</span>
+        <span>Home</span>
+      </button>
+      <button class="nav-item" type="button" data-route="goals" title="Crew goals">
+        <span class="nav-icon">◎</span>
+        <span>Goals</span>
+      </button>
+      <button class="nav-item" type="button" data-route="summary" title="Workout summary">
+        <span class="nav-icon">▶</span>
+        <span>Run</span>
+      </button>
+      <button class="nav-item" type="button" data-route="inbox" title="Invites">
+        <span class="nav-icon">□</span>
+        <span>Inbox</span>
+      </button>
+    </nav>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="sheet" id="sheet" aria-live="polite"></div>
+  </div>
+
+  <script>
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const ROUTE_LENGTH = 324;
+    const GOAL_STATUS = {
+      DRAFT: "Draft",
+      ACTIVE: "Active",
+      COMPLETED: "Completed",
+      EXPIRED: "Expired"
+    };
+    const INVITE_STATUS = {
+      PENDING: "Pending",
+      ACCEPTED: "Accepted",
+      IGNORED: "Ignored",
+      INVALID: "Invalid"
+    };
+
+    const currentUser = {
+      id: "u1",
+      name: "Mia Chen",
+      initials: "MC",
+      weeklyAverage: 14.2,
+      color: "#16b4ea"
+    };
+
+    const users = {
+      u1: currentUser,
+      u2: { id: "u2", name: "Nora Li", initials: "NL", weeklyAverage: 12.8, color: "#ffc221", tag: "Recent teammate" },
+      u3: { id: "u3", name: "Alex Wong", initials: "AW", weeklyAverage: 9.6, color: "#23b35b", tag: "Active friend" },
+      u4: { id: "u4", name: "Sam Park", initials: "SP", weeklyAverage: 11.5, color: "#ff7c3b", tag: "Recent teammate" },
+      u5: { id: "u5", name: "Lea Tan", initials: "LT", weeklyAverage: 0, color: "#8e5ce6", tag: "No recent run data" },
+      u6: { id: "u6", name: "Kai Huang", initials: "KH", weeklyAverage: 17.2, color: "#2c8fbd", tag: "Active friend" },
+      u7: { id: "u7", name: "Oskar Berg", initials: "OB", weeklyAverage: 13.1, color: "#6f767b", tag: "Inviter" }
+    };
+
+    const friendIds = ["u2", "u3", "u4", "u5", "u6"];
+
+    let activeGoal = {
+      id: "goal-ridge",
+      creatorId: "u2",
+      targetDistance: 50,
+      startTime: new Date(Date.now() - 4 * DAY_MS).toISOString(),
+      endTime: new Date(Date.now() + 3 * DAY_MS).toISOString(),
+      status: GOAL_STATUS.ACTIVE,
+      memberIds: ["u1", "u2", "u3", "u4"],
+      pendingInviteIds: [],
+      createdAt: new Date(Date.now() - 4 * DAY_MS).toISOString(),
+      completedAt: null,
+      expiredAt: null,
+      resultLockedAt: null,
+      finalDistance: null,
+      recommendationTier: "Stretch",
+      recommendationSource: "recent_training",
+      title: "Ridge Week"
+    };
+
+    let goalMembers = [
+      { goalId: "goal-ridge", userId: "u1", joinTime: new Date(Date.now() - 4 * DAY_MS).toISOString(), role: "Member", contributionDistance: 13.2 },
+      { goalId: "goal-ridge", userId: "u2", joinTime: new Date(Date.now() - 4 * DAY_MS).toISOString(), role: "Creator", contributionDistance: 10.4 },
+      { goalId: "goal-ridge", userId: "u3", joinTime: new Date(Date.now() - 3 * DAY_MS).toISOString(), role: "Member", contributionDistance: 8.1 },
+      { goalId: "goal-ridge", userId: "u4", joinTime: new Date(Date.now() - 3 * DAY_MS).toISOString(), role: "Member", contributionDistance: 6.4 }
+    ];
+
+    let goalInvites = [
+      {
+        id: "invite-valid",
+        goalId: "goal-coast",
+        inviteeId: "u1",
+        inviterId: "u7",
+        status: INVITE_STATUS.PENDING,
+        expiresAt: new Date(Date.now() + 6 * DAY_MS).toISOString(),
+        targetDistance: 35,
+        startTime: new Date(Date.now() - 1 * DAY_MS).toISOString(),
+        endTime: new Date(Date.now() + 6 * DAY_MS).toISOString(),
+        title: "Coast Base",
+        memberIds: ["u7", "u6"]
+      },
+      {
+        id: "invite-full",
+        goalId: "goal-city",
+        inviteeId: "u1",
+        inviterId: "u6",
+        status: INVITE_STATUS.INVALID,
+        expiresAt: new Date(Date.now() + 5 * DAY_MS).toISOString(),
+        targetDistance: 50,
+        startTime: new Date(Date.now() - 2 * DAY_MS).toISOString(),
+        endTime: new Date(Date.now() + 5 * DAY_MS).toISOString(),
+        title: "City Tempo",
+        memberIds: ["u2", "u3", "u4", "u6"],
+        invalidReason: "full"
+      },
+      {
+        id: "invite-ended",
+        goalId: "goal-ended",
+        inviteeId: "u1",
+        inviterId: "u3",
+        status: INVITE_STATUS.INVALID,
+        expiresAt: new Date(Date.now() - DAY_MS).toISOString(),
+        targetDistance: 30,
+        startTime: new Date(Date.now() - 9 * DAY_MS).toISOString(),
+        endTime: new Date(Date.now() - 2 * DAY_MS).toISOString(),
+        title: "May Base",
+        memberIds: ["u3", "u5"],
+        invalidReason: "ended"
+      }
+    ];
+
+    let contributions = [
+      { goalId: "goal-ridge", activityId: "act-101", userId: "u2", distance: 5.4, activityType: "Run", activitySource: "suunto", activityEndTime: new Date(Date.now() - 3.7 * DAY_MS).toISOString(), syncedAt: new Date(Date.now() - 3.7 * DAY_MS + 15 * 60000).toISOString(), countedAt: new Date(Date.now() - 3.7 * DAY_MS + 15 * 60000).toISOString(), status: "Counted" },
+      { goalId: "goal-ridge", activityId: "act-102", userId: "u1", distance: 6.1, activityType: "Trail Run", activitySource: "suunto", activityEndTime: new Date(Date.now() - 3.1 * DAY_MS).toISOString(), syncedAt: new Date(Date.now() - 3.1 * DAY_MS + 10 * 60000).toISOString(), countedAt: new Date(Date.now() - 3.1 * DAY_MS + 10 * 60000).toISOString(), status: "Counted" },
+      { goalId: "goal-ridge", activityId: "act-103", userId: "u3", distance: 8.1, activityType: "Run", activitySource: "suunto", activityEndTime: new Date(Date.now() - 2.3 * DAY_MS).toISOString(), syncedAt: new Date(Date.now() - 2.3 * DAY_MS + 12 * 60000).toISOString(), countedAt: new Date(Date.now() - 2.3 * DAY_MS + 12 * 60000).toISOString(), status: "Counted" },
+      { goalId: "goal-ridge", activityId: "act-104", userId: "u4", distance: 6.4, activityType: "Run", activitySource: "suunto", activityEndTime: new Date(Date.now() - 1.4 * DAY_MS).toISOString(), syncedAt: new Date(Date.now() - 1.4 * DAY_MS + 7 * 60000).toISOString(), countedAt: new Date(Date.now() - 1.4 * DAY_MS + 7 * 60000).toISOString(), status: "Counted" },
+      { goalId: "goal-ridge", activityId: "act-105", userId: "u1", distance: 7.1, activityType: "Run", activitySource: "suunto", activityEndTime: new Date(Date.now() - 0.8 * DAY_MS).toISOString(), syncedAt: new Date(Date.now() - 0.8 * DAY_MS + 9 * 60000).toISOString(), countedAt: new Date(Date.now() - 0.8 * DAY_MS + 9 * 60000).toISOString(), status: "Counted" },
+      { goalId: "goal-ridge", activityId: "act-106", userId: "u2", distance: 5.0, activityType: "Trail Run", activitySource: "suunto", activityEndTime: new Date(Date.now() - 0.4 * DAY_MS).toISOString(), syncedAt: new Date(Date.now() - 0.4 * DAY_MS + 11 * 60000).toISOString(), countedAt: new Date(Date.now() - 0.4 * DAY_MS + 11 * 60000).toISOString(), status: "Counted" }
+    ];
+
+    const historyGoals = [
+      {
+        id: "goal-forest",
+        creatorId: "u1",
+        targetDistance: 45,
+        startTime: new Date(Date.now() - 14 * DAY_MS).toISOString(),
+        endTime: new Date(Date.now() - 7 * DAY_MS).toISOString(),
+        status: GOAL_STATUS.EXPIRED,
+        memberIds: ["u1", "u2", "u5"],
+        pendingInviteIds: [],
+        createdAt: new Date(Date.now() - 14 * DAY_MS).toISOString(),
+        completedAt: null,
+        expiredAt: new Date(Date.now() - 7 * DAY_MS).toISOString(),
+        resultLockedAt: new Date(Date.now() - 7 * DAY_MS).toISOString(),
+        finalDistance: 38.6,
+        recommendationTier: "Recommended",
+        recommendationSource: "recent_training",
+        title: "Forest Base",
+        totalDistance: 38.6
+      }
+    ];
+
+    let route = "home";
+    let backStack = [];
+    let searchQuery = "";
+    let selectedFriendIds = ["u2", "u3", "u4"];
+    let selectedRecommendation = "Recommended";
+    let selectedInviteId = "invite-valid";
+    let selectedResultGoal = null;
+    let toastTimer = null;
+    let syncState = "idle";
+    let lastSyncImpact = null;
+    let analyticsEvents = {};
+    let shareSheet = null;
+
+    const pendingActivity = {
+      activityId: "run-today-001",
+      userId: currentUser.id,
+      distance: 12.4,
+      activityType: "Run",
+      activitySource: "suunto",
+      activityEndTime: new Date().toISOString()
+    };
+
+    const ineligibleActivity = {
+      activityId: "ride-today-001",
+      userId: currentUser.id,
+      distance: 18.2,
+      activityType: "Cycling",
+      activitySource: "suunto",
+      activityEndTime: new Date().toISOString()
+    };
+
+    function escapeHTML(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function formatKm(value) {
+      return `${Number(value).toFixed(1)} km`;
+    }
+
+    function plural(value, unit) {
+      return `${value} ${unit}${value === 1 ? "" : "s"}`;
+    }
+
+    function daysLeft(goal) {
+      if (!goal) return 0;
+      const left = Math.ceil((new Date(goal.endTime).getTime() - Date.now()) / DAY_MS);
+      return Math.max(0, left);
+    }
+
+    function elapsedDays(goal) {
+      if (!goal) return 0;
+      return Math.max(1, Math.ceil((Date.now() - new Date(goal.startTime).getTime()) / DAY_MS));
+    }
+
+    function resultDays(goal) {
+      if (!goal) return 0;
+      const end = goal.completedAt || goal.expiredAt || goal.resultLockedAt || goal.endTime || new Date().toISOString();
+      return Math.max(1, Math.ceil((new Date(end).getTime() - new Date(goal.startTime).getTime()) / DAY_MS));
+    }
+
+    function goalDurationDays(goal) {
+      if (!goal) return 0;
+      return Math.max(1, Math.ceil((new Date(goal.endTime).getTime() - new Date(goal.startTime).getTime()) / DAY_MS));
+    }
+
+    function onTrackLabel(goal) {
+      if (!goal) return "";
+      if (goal.status === GOAL_STATUS.COMPLETED) return "Goal completed";
+      if (goal.status === GOAL_STATUS.EXPIRED) return "Goal expired";
+      const stats = progress(goal);
+      const start = new Date(goal.startTime).getTime();
+      const end = new Date(goal.endTime).getTime();
+      const elapsed = Math.min(Math.max(Date.now() - start, 0), Math.max(end - start, 1));
+      const expectedProgress = (elapsed / Math.max(end - start, 1)) * 100;
+      return stats.percent >= expectedProgress - 10
+        ? `On track · ${formatKm(stats.left)} left`
+        : `${formatKm(stats.left)} left`;
+    }
+
+    function track(name) {
+      analyticsEvents[name] = (analyticsEvents[name] || 0) + 1;
+    }
+
+    function toast(message) {
+      const node = document.getElementById("toast");
+      node.textContent = message;
+      node.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => node.classList.remove("show"), 2200);
+    }
+
+    function generatedGoalTitle(memberIds = [currentUser.id, ...selectedFriendIds]) {
+      const friends = memberIds.filter((id) => id !== currentUser.id);
+      if (!friends.length) return "Weekly Crew Goal";
+      if (friends.length === 1) return `${currentUser.name.split(" ")[0]} + ${users[friends[0]].name.split(" ")[0]} Crew`;
+      return `${currentUser.name.split(" ")[0]} + ${friends.length} Crew`;
+    }
+
+    function openShareSheet(type, goal) {
+      if (!goal) return;
+      shareSheet = { type, goal };
+      renderShareSheet();
+    }
+
+    function closeShareSheet() {
+      shareSheet = null;
+      renderShareSheet();
+    }
+
+    function getGoalContributions(goalId) {
+      return contributions.filter((item) => item.goalId === goalId);
+    }
+
+    function pendingInvites(goal) {
+      if (!goal) return [];
+      return goalInvites.filter((invite) => invite.goalId === goal.id && invite.status === INVITE_STATUS.PENDING);
+    }
+
+    function participantCounts(goal) {
+      const joined = goal?.memberIds?.length || 0;
+      const pending = pendingInvites(goal).length;
+      return { joined, pending, total: joined + pending };
+    }
+
+    function memberContribution(goalId, userId) {
+      return getGoalContributions(goalId)
+        .filter((item) => item.userId === userId)
+        .reduce((sum, item) => sum + item.distance, 0);
+    }
+
+    function totalContribution(goal) {
+      if (!goal) return 0;
+      if (typeof goal.finalDistance === "number") return goal.finalDistance;
+      if (typeof goal.totalDistance === "number") return goal.totalDistance;
+      return getGoalContributions(goal.id).reduce((sum, item) => sum + item.distance, 0);
+    }
+
+    function progress(goal) {
+      const total = totalContribution(goal);
+      const target = goal ? goal.targetDistance : 1;
+      const percent = Math.min(100, Math.round((total / target) * 100));
+      return { total, target, percent, left: Math.max(0, target - total) };
+    }
+
+    function refreshGoalStatus(goal = activeGoal) {
+      if (!goal || goal.status !== GOAL_STATUS.ACTIVE) return;
+      const stats = progress(goal);
+      if (stats.total >= goal.targetDistance) {
+        goal.status = GOAL_STATUS.COMPLETED;
+        goal.completedAt = goal.completedAt || new Date().toISOString();
+        goal.resultLockedAt = goal.completedAt;
+        goal.finalDistance = stats.total;
+        selectedResultGoal = goal;
+        track("crew_goal_completed");
+        return;
+      }
+      if (Date.now() >= new Date(goal.endTime).getTime()) {
+        goal.status = GOAL_STATUS.EXPIRED;
+        goal.expiredAt = goal.expiredAt || goal.endTime;
+        goal.resultLockedAt = goal.expiredAt;
+        goal.finalDistance = stats.total;
+        selectedResultGoal = goal;
+        track("crew_goal_expired");
+      }
+    }
+
+    function hasActiveGoal() {
+      refreshGoalStatus(activeGoal);
+      return activeGoal && activeGoal.status === GOAL_STATUS.ACTIVE;
+    }
+
+    function isEligibleActivity(activity, goal) {
+      if (!goal || goal.status !== GOAL_STATUS.ACTIVE) return false;
+      if (!["Run", "Trail Run"].includes(activity.activityType)) return false;
+      if (activity.activitySource !== "suunto") return false;
+      const member = goalMembers.find((item) => item.goalId === goal.id && item.userId === activity.userId);
+      if (!member) return false;
+      const end = new Date(activity.activityEndTime).getTime();
+      return end >= new Date(member.joinTime).getTime()
+        && end >= new Date(goal.startTime).getTime()
+        && end <= new Date(goal.endTime).getTime();
+    }
+
+    function addContribution(activity) {
+      if (!activeGoal) {
+        syncState = "ineligible";
+        lastSyncImpact = { reason: "no_active_goal" };
+        track("crew_goal_contribution_ineligible");
+        render();
+        return;
+      }
+      if (contributions.some((item) => item.activityId === activity.activityId)) {
+        syncState = "duplicate";
+        lastSyncImpact = { reason: "duplicate" };
+        render();
+        return;
+      }
+      if (!isEligibleActivity(activity, activeGoal)) {
+        syncState = "ineligible";
+        lastSyncImpact = { reason: "activity_type" };
+        track("crew_goal_contribution_ineligible");
+        render();
+        return;
+      }
+      const before = totalContribution(activeGoal);
+      contributions.push({
+        goalId: activeGoal.id,
+        activityId: activity.activityId,
+        userId: activity.userId,
+        distance: activity.distance,
+        activityType: activity.activityType,
+        activitySource: activity.activitySource,
+        activityEndTime: activity.activityEndTime,
+        syncedAt: new Date().toISOString(),
+        countedAt: new Date().toISOString(),
+        status: "Counted"
+      });
+      lastSyncImpact = {
+        before,
+        after: totalContribution(activeGoal),
+        distance: activity.distance
+      };
+      syncState = "synced";
+      track("crew_goal_postrun_card_view");
+      track("crew_goal_contribution_counted");
+      refreshGoalStatus(activeGoal);
+      render();
+    }
+
+    function syncPendingRun() {
+      if (!activeGoal || activeGoal.status !== GOAL_STATUS.ACTIVE) return;
+      if (contributions.some((item) => item.activityId === pendingActivity.activityId)) {
+        syncState = "duplicate";
+        lastSyncImpact = { reason: "duplicate" };
+        render();
+        return;
+      }
+      syncState = "updating";
+      lastSyncImpact = null;
+      render();
+      setTimeout(() => addContribution(pendingActivity), 1100);
+    }
+
+    function createAvatar(userId, sizeClass = "") {
+      const user = users[userId];
+      if (!user) return "";
+      return `<span class="avatar ${sizeClass}" style="--avatar:${user.color}">${escapeHTML(user.initials)}</span>`;
+    }
+
+    function avatarStack(memberIds) {
+      return `
+        <div class="avatar-stack" aria-label="${memberIds.length} members">
+          ${memberIds.slice(0, 4).map((id) => createAvatar(id)).join("")}
+        </div>
+      `;
+    }
+
+    function routeSvg(goal) {
+      const stats = progress(goal);
+      const offset = ROUTE_LENGTH * (1 - stats.percent / 100);
+      return `
+        <svg viewBox="0 0 342 246" role="img" aria-label="Route progress">
+          <path d="M-10 44 C46 20 74 72 130 48 S222 6 352 32" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+          <path d="M-18 92 C38 68 92 110 144 86 S228 54 360 74" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="1"/>
+          <path d="M-22 140 C42 106 86 152 150 128 S248 92 364 116" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+          <path d="M-12 188 C52 156 102 198 166 174 S254 142 358 158" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1"/>
+          <path d="M37 188 C78 148 84 88 132 83 C175 79 185 130 221 126 C256 122 273 71 313 52" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="8" stroke-linecap="round"/>
+          <path d="M37 188 C78 148 84 88 132 83 C175 79 185 130 221 126 C256 122 273 71 313 52" fill="none" stroke="#ffc221" stroke-width="8" stroke-linecap="round" stroke-dasharray="${ROUTE_LENGTH}" stroke-dashoffset="${offset}"/>
+          <circle cx="37" cy="188" r="6" fill="#ffffff"/>
+          <circle cx="313" cy="52" r="7" fill="#16b4ea"/>
+        </svg>
+      `;
+    }
+
+    function renderRouteCard(goal, compact = false, targetRoute = "") {
+      const stats = progress(goal);
+      const stateLabel = goal.status === GOAL_STATUS.COMPLETED
+        ? "Goal completed"
+        : goal.status === GOAL_STATUS.EXPIRED
+          ? "Goal expired"
+          : `${onTrackLabel(goal)} · ${plural(daysLeft(goal), "day")} left`;
+      return `
+        <section class="card route-card ${compact ? "compact" : ""}" ${targetRoute ? `data-route="${targetRoute}"` : ""}>
+          ${routeSvg(goal)}
+          <div class="route-content">
+            <div class="route-head">
+              <div>
+                <div class="eyebrow">Crew Goals</div>
+                <h2>${escapeHTML(goal.title || "Crew Goal")}</h2>
+              </div>
+              <span class="status-pill">${escapeHTML(goal.status)}</span>
+            </div>
+            <div>
+              <div class="large-number">${stats.total.toFixed(1)}<small>/ ${stats.target} km</small></div>
+              <div class="muted">${escapeHTML(stateLabel)}</div>
+            </div>
+            <div class="progress-line" aria-label="${stats.percent}% complete">
+              <div class="progress-fill" style="--progress:${stats.percent}%"></div>
+            </div>
+            <div class="metric-grid">
+              <div class="metric">
+                <strong>${stats.percent}%</strong>
+                <span>complete</span>
+              </div>
+              <div class="metric">
+                <strong>${formatKm(memberContribution(goal.id, currentUser.id)).replace(" km", "")}</strong>
+                <span>my km</span>
+              </div>
+              <div class="metric">
+                <strong>${daysLeft(goal)}</strong>
+                <span>days left</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function recommendationValues() {
+      const memberIds = [currentUser.id, ...selectedFriendIds];
+      const data = memberIds.map((id) => users[id].weeklyAverage).filter((value) => value > 0);
+      if (data.length < 2) {
+        return {
+          source: "Default distances are used until enough recent run data is available.",
+          values: { Easy: 20, Recommended: 35, Stretch: 50 }
+        };
+      }
+      const estimated = data.reduce((sum, value) => sum + value, 0);
+      const roundToFive = (value) => Math.max(10, Math.round(value / 5) * 5);
+      return {
+        source: "Based on available 4-week Run and Trail Run volume.",
+        values: {
+          Easy: roundToFive(estimated * 0.8),
+          Recommended: roundToFive(estimated),
+          Stretch: roundToFive(estimated * 1.2)
+        }
+      };
+    }
+
+    function titleForRoute() {
+      const titles = {
+        home: "Today",
+        goals: "Crew Goals",
+        create: "Start a Goal",
+        friends: "Choose Friends",
+        preview: "Goal Preview",
+        detail: "Goal Detail",
+        summary: "Workout Summary",
+        inbox: "Invites",
+        join: "Join Goal",
+        completed: "Goal Completed",
+        expired: "Goal Ended"
+      };
+      return titles[route] || "Crew Goals";
+    }
+
+    function navigate(nextRoute, options = {}) {
+      if (nextRoute === "summary") syncPendingRun();
+      if (options.inviteId) selectedInviteId = options.inviteId;
+      if (options.resultGoal) selectedResultGoal = options.resultGoal;
+      if (!options.replace && route !== nextRoute) backStack.push(route);
+      route = nextRoute;
+      const viewEvents = {
+        home: "crew_goal_entry_impression",
+        create: "crew_goal_create_start",
+        preview: "crew_goal_recommendation_selected",
+        detail: "crew_goal_detail_view",
+        summary: "crew_goal_postrun_card_view",
+        join: "crew_goal_invite_opened",
+        completed: "crew_goal_completed",
+        expired: "crew_goal_expired"
+      };
+      if (viewEvents[nextRoute]) track(viewEvents[nextRoute]);
+      render();
+    }
+
+    function goBack() {
+      route = backStack.pop() || "home";
+      render();
+    }
+
+    function startGoalFlow(prefillPrevious = false) {
+      if (hasActiveGoal()) {
+        toast("Finish your current Crew Goal before starting another.");
+        return;
+      }
+      searchQuery = "";
+      selectedRecommendation = "Recommended";
+      if (prefillPrevious && activeGoal) {
+        selectedFriendIds = activeGoal.memberIds.filter((id) => id !== currentUser.id).slice(0, 3);
+        track("crew_goal_restart");
+      } else {
+        selectedFriendIds = [];
+      }
+      track("crew_goal_create_start");
+      navigate("create");
+    }
+
+    function sendInvites() {
+      if (selectedFriendIds.length < 1) {
+        toast("Choose at least one friend.");
+        return;
+      }
+      const recommendation = recommendationValues();
+      const targetDistance = recommendation.values[selectedRecommendation];
+      const goalId = `goal-${Date.now()}`;
+      const now = Date.now();
+      const startTime = new Date(now).toISOString();
+      const endTime = new Date(now + 7 * DAY_MS).toISOString();
+      const pendingInviteIds = selectedFriendIds.map((friendId) => `invite-${goalId}-${friendId}`);
+      activeGoal = {
+        id: goalId,
+        creatorId: currentUser.id,
+        targetDistance,
+        startTime,
+        endTime,
+        status: GOAL_STATUS.ACTIVE,
+        memberIds: [currentUser.id],
+        pendingInviteIds,
+        createdAt: startTime,
+        completedAt: null,
+        expiredAt: null,
+        resultLockedAt: null,
+        finalDistance: null,
+        recommendationTier: selectedRecommendation,
+        recommendationSource: recommendation.source.includes("Default") ? "default" : "recent_training",
+        title: generatedGoalTitle()
+      };
+      goalMembers = goalMembers.filter((member) => member.goalId !== goalId);
+      goalMembers.push({
+        goalId,
+        userId: currentUser.id,
+        joinTime: startTime,
+        role: "Creator",
+        contributionDistance: 0
+      });
+      goalInvites = goalInvites.filter((invite) => invite.goalId !== goalId).concat(
+        selectedFriendIds.map((friendId, index) => ({
+          id: pendingInviteIds[index],
+          goalId,
+          inviteeId: friendId,
+          inviterId: currentUser.id,
+          status: INVITE_STATUS.PENDING,
+          createdAt: startTime,
+          acceptedAt: null,
+          ignoredAt: null,
+          expiresAt: endTime,
+          targetDistance,
+          startTime,
+          endTime,
+          title: activeGoal.title,
+          memberIds: [currentUser.id],
+          invalidReason: ""
+        }))
+      );
+      contributions = contributions.filter((item) => item.goalId !== goalId);
+      syncState = "idle";
+      lastSyncImpact = null;
+      selectedResultGoal = null;
+      track("crew_goal_friend_select_complete");
+      track("crew_goal_invite_sent");
+      navigate("detail", { replace: true });
+      toast("Invites sent. Goal is active for 7 days.");
+    }
+
+    function joinInvite(invite) {
+      if (!invite || invite.status !== INVITE_STATUS.PENDING) return;
+      const inviteExpired = new Date(invite.expiresAt || invite.endTime).getTime() <= Date.now();
+      if (invite.memberIds.length >= 4 || invite.invalidReason === "full") {
+        toast("This goal is already full.");
+        return;
+      }
+      if (inviteExpired || new Date(invite.endTime).getTime() <= Date.now() || invite.invalidReason === "ended") {
+        toast("This goal has ended.");
+        return;
+      }
+      if (hasActiveGoal()) {
+        track("crew_goal_invite_blocked_active_goal");
+        toast("You already have an active Crew Goal.");
+        return;
+      }
+      invite.status = INVITE_STATUS.ACCEPTED;
+      invite.acceptedAt = new Date().toISOString();
+      const memberIds = [...new Set([...invite.memberIds, currentUser.id])];
+      activeGoal = {
+        id: invite.goalId,
+        creatorId: invite.inviterId,
+        targetDistance: invite.targetDistance,
+        startTime: invite.startTime,
+        endTime: invite.endTime,
+        status: GOAL_STATUS.ACTIVE,
+        memberIds,
+        pendingInviteIds: [],
+        createdAt: invite.startTime,
+        completedAt: null,
+        expiredAt: null,
+        resultLockedAt: null,
+        finalDistance: null,
+        recommendationTier: "Recommended",
+        recommendationSource: "recent_training",
+        title: invite.title
+      };
+      memberIds.forEach((memberId) => {
+        if (!goalMembers.some((member) => member.goalId === activeGoal.id && member.userId === memberId)) {
+          goalMembers.push({
+            goalId: activeGoal.id,
+            userId: memberId,
+            joinTime: memberId === currentUser.id ? invite.acceptedAt : invite.startTime,
+            role: memberId === invite.inviterId ? "Creator" : "Member",
+            contributionDistance: 0
+          });
+        }
+      });
+      selectedResultGoal = null;
+      track("crew_goal_invite_accepted");
+      navigate("detail", { replace: true });
+    }
+
+    function renderAppBar() {
+      const canGoBack = !["home", "goals", "summary", "inbox"].includes(route) && backStack.length > 0;
+      const rightAction = route === "home"
+        ? `<button class="icon-button ghost" type="button" data-route="inbox" title="Invites">□</button>`
+        : route === "goals"
+          ? `<button class="icon-button" type="button" data-action="start-goal" title="Start goal">+</button>`
+          : `<span></span>`;
+      document.getElementById("appbar").innerHTML = `
+        ${canGoBack ? `<button class="icon-button ghost" type="button" data-action="back" title="Back">‹</button>` : `<span></span>`}
+        <h1>${escapeHTML(titleForRoute())}</h1>
+        ${rightAction}
+      `;
+    }
+
+    function renderHome() {
+      refreshGoalStatus(activeGoal);
+      const active = hasActiveGoal();
+      return `
+        <div class="stack">
+          ${active ? renderRouteCard(activeGoal, false, "detail") : `
+            <section class="card route-card" data-route="goals">
+              ${routeSvg({ id: "empty", targetDistance: 35, status: GOAL_STATUS.ACTIVE, memberIds: [], startTime: new Date().toISOString(), endTime: new Date(Date.now() + 7 * DAY_MS).toISOString(), title: "Crew Goals", totalDistance: 0 })}
+              <div class="route-content">
+                <div>
+                  <div class="eyebrow">Crew Goals</div>
+                  <h2>Run separately. Finish together.</h2>
+                </div>
+                <p class="muted">Invite 1 to 3 friends. Every eligible Run or Trail Run moves the crew goal automatically.</p>
+                <button class="btn primary" type="button" data-action="start-goal">Start a Goal</button>
+              </div>
+            </section>
+          `}
+
+          <section class="section">
+            <div class="section-title">
+              <span>Training week</span>
+              <span>Run / Trail Run</span>
+            </div>
+            <div class="metric-grid">
+              <div class="metric">
+                <strong>${active ? formatKm(memberContribution(activeGoal.id, currentUser.id)).replace(" km", "") : "0.0"}</strong>
+                <span>my crew km</span>
+              </div>
+              <div class="metric">
+                <strong>${active ? progress(activeGoal).percent : 0}%</strong>
+                <span>crew progress</span>
+              </div>
+              <div class="metric">
+                <strong>${active ? daysLeft(activeGoal) : 7}</strong>
+                <span>days left</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-title">
+              <span>Post-run feedback</span>
+              <span>${active ? "Ready" : "No active goal"}</span>
+            </div>
+            <p class="muted">${active ? "Your next eligible run will update the crew card after sync." : "Create a Crew Goal to turn future runs into shared progress."}</p>
+            <div class="button-row">
+              <button class="btn" type="button" data-route="summary">View run</button>
+              <button class="btn primary" type="button" data-route="${active ? "detail" : "goals"}">${active ? "View goal" : "Open hub"}</button>
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderGoalsHub() {
+      refreshGoalStatus(activeGoal);
+      const active = hasActiveGoal();
+      const resultGoal = selectedResultGoal || (activeGoal && activeGoal.status !== GOAL_STATUS.ACTIVE ? activeGoal : null);
+      const counts = participantCounts(activeGoal);
+      return `
+        <div class="stack">
+          ${active ? `
+            ${renderRouteCard(activeGoal, true)}
+            <section class="section">
+              <div class="section-title">
+                <span>Hub summary</span>
+                <span>Current cycle</span>
+              </div>
+              <div class="metric-grid">
+                <div class="metric">
+                  <strong>1</strong>
+                  <span>active goal</span>
+                </div>
+                <div class="metric">
+                  <strong>${formatKm(memberContribution(activeGoal.id, currentUser.id)).replace(" km", "")}</strong>
+                  <span>my contribution</span>
+                </div>
+                <div class="metric">
+                  <strong>${progress(activeGoal).left.toFixed(1)}</strong>
+                  <span>km left</span>
+                </div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="section-title">
+                <span>Crew</span>
+                <span>${counts.joined} joined · ${counts.pending} pending</span>
+              </div>
+              ${renderMemberRows(activeGoal)}
+              <div class="button-row">
+                <button class="btn" type="button" data-action="share">Share</button>
+                <button class="btn primary" type="button" data-route="detail">Open detail</button>
+              </div>
+            </section>
+          ` : `
+            <section class="card empty">
+              <div class="empty-mark">◎</div>
+              <div>
+                <h2 class="page-title">No active Crew Goal</h2>
+                <p class="muted">Set a 7-day distance goal with friends and let runs add up automatically.</p>
+              </div>
+              <button class="btn primary" type="button" data-action="start-goal">Start a Goal</button>
+            </section>
+            ${resultGoal ? renderResultSummary(resultGoal) : ""}
+          `}
+          <section class="card">
+            <div class="section-title">
+              <span>Demo state: ended goal</span>
+              <span>Prototype only</span>
+            </div>
+            <p class="muted">Forest Base reached ${formatKm(historyGoals[0].finalDistance)} of ${historyGoals[0].targetDistance} km before the 7-day window ended. Production Phase 1 does not include a full history list.</p>
+            <button class="btn" type="button" data-action="view-expired">View ended goal</button>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderCreate() {
+      return `
+        <div class="stack">
+          <section class="card">
+            <div class="eyebrow">Distance Goal</div>
+            <h2 class="page-title">Seven days. One shared distance.</h2>
+            <p class="muted">Crew Goals are asynchronous. Friends do not need to run together or start at the same time.</p>
+          </section>
+          <section class="card">
+            <div class="step-list">
+              <div class="step">
+                <span class="step-icon">1</span>
+                <div>
+                  <strong>Invite friends</strong>
+                  <p class="muted">Choose 1 to 3 people. You are included automatically.</p>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-icon">2</span>
+                <div>
+                  <strong>Run separately</strong>
+                  <p class="muted">Runs can happen anywhere within the 7-day window.</p>
+                </div>
+              </div>
+              <div class="step">
+                <span class="step-icon">3</span>
+                <div>
+                  <strong>Distance adds automatically</strong>
+                  <p class="muted">Synced Run and Trail Run activities move the crew progress.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+          <button class="btn primary" type="button" data-route="friends">Choose Friends</button>
+        </div>
+      `;
+    }
+
+    function renderFriends() {
+      const query = searchQuery.trim().toLowerCase();
+      const filtered = friendIds.filter((id) => {
+        const user = users[id];
+        return !query || user.name.toLowerCase().includes(query) || user.tag.toLowerCase().includes(query);
+      });
+      return `
+        <div class="stack">
+          <input class="search" type="search" value="${escapeHTML(searchQuery)}" placeholder="Search friends" aria-label="Search friends" data-input="friend-search">
+          <section class="card">
+            <div class="section-title">
+              <span>Selected crew</span>
+              <span>${selectedFriendIds.length + 1}/4 including you</span>
+            </div>
+            <div class="row-list">
+              <div class="row compact">
+                ${createAvatar(currentUser.id)}
+                <div class="row-main">
+                  <strong>${escapeHTML(currentUser.name)}</strong>
+                  <span>Creator · included</span>
+                </div>
+                <span class="tiny-pill blue">You</span>
+              </div>
+              ${selectedFriendIds.map((id) => `
+                <div class="row compact">
+                  ${createAvatar(id)}
+                  <div class="row-main">
+                    <strong>${escapeHTML(users[id].name)}</strong>
+                    <span>${escapeHTML(users[id].tag)}</span>
+                  </div>
+                  <button class="icon-button" type="button" data-action="toggle-friend" data-id="${id}" title="Remove ${escapeHTML(users[id].name)}">-</button>
+                </div>
+              `).join("")}
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-title">
+              <span>Recent and active friends</span>
+              <span>Choose 1 to 3</span>
+            </div>
+            ${filtered.length ? `
+              <div class="row-list">
+                ${filtered.map((id) => {
+                  const selected = selectedFriendIds.includes(id);
+                  const user = users[id];
+                  return `
+                    <div class="card row">
+                      ${createAvatar(id)}
+                      <div class="row-main">
+                        <strong>${escapeHTML(user.name)}</strong>
+                        <span>${escapeHTML(user.tag)} · ${user.weeklyAverage ? formatKm(user.weeklyAverage).replace(".0", "") + "/wk" : "no recent data"}</span>
+                      </div>
+                      <button class="icon-button" type="button" data-action="toggle-friend" data-id="${id}" title="${selected ? "Remove" : "Add"} ${escapeHTML(user.name)}">${selected ? "✓" : "+"}</button>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            ` : `
+              <div class="card empty">
+                <div class="empty-mark">+</div>
+                <div>
+                  <h2 class="page-title">No inviteable friends</h2>
+                  <p class="muted">Try another search or come back after connecting with active friends.</p>
+                </div>
+              </div>
+            `}
+          </section>
+          <button class="btn primary ${selectedFriendIds.length ? "" : "disabled"}" type="button" data-action="continue-friends" ${selectedFriendIds.length ? "" : "disabled"}>Continue</button>
+        </div>
+      `;
+    }
+
+    function renderPreview() {
+      const recommendation = recommendationValues();
+      const values = recommendation.values;
+      const labels = {
+        Easy: "80% of estimated crew week",
+        Recommended: "Balanced 7-day target",
+        Stretch: "120% of estimated crew week"
+      };
+      return `
+        <div class="stack">
+          <section class="card">
+            <div class="section-title">
+              <span>Crew preview</span>
+              <span>${selectedFriendIds.length + 1} members</span>
+            </div>
+            ${avatarStack([currentUser.id, ...selectedFriendIds])}
+            <p class="muted">No need to run together. Eligible runs add automatically after sync.</p>
+            <ul class="rule-list" aria-label="Goal rules">
+              <li>Goal starts immediately when you send invites.</li>
+              <li>Friends who join later only contribute future runs.</li>
+              <li>Active goals cannot be cancelled, edited, or expanded in Phase 1.</li>
+            </ul>
+          </section>
+          <section class="section">
+            <div class="section-title">
+              <span>Recommended distance</span>
+              <span>7 days</span>
+            </div>
+            <div class="choice-list">
+              ${Object.keys(values).map((label) => `
+                <button class="choice ${selectedRecommendation === label ? "active" : ""}" type="button" data-action="select-recommendation" data-id="${label}">
+                  <span>
+                    <strong>${escapeHTML(label)}</strong>
+                    <span class="muted">${escapeHTML(labels[label])}</span>
+                  </span>
+                  <span class="distance">${values[label]} km</span>
+                </button>
+              `).join("")}
+            </div>
+            <p class="muted">${escapeHTML(recommendation.source)}</p>
+          </section>
+          <button class="btn primary" type="button" data-action="send-invites">Send Invite</button>
+        </div>
+      `;
+    }
+
+    function renderMemberRows(goal) {
+      const rows = goal.memberIds.map((id) => {
+        const distance = memberContribution(goal.id, id);
+        const pct = Math.min(100, Math.round((distance / Math.max(1, goal.targetDistance)) * 100));
+        return `
+          <div class="row">
+            ${createAvatar(id)}
+            <div class="row-main">
+              <strong>${escapeHTML(users[id].name)}</strong>
+              <span>${goal.creatorId === id ? "Creator" : "Member"} · ${formatKm(distance)}</span>
+              <div class="progress-line"><div class="progress-fill" style="--progress:${pct}%"></div></div>
+            </div>
+            <span class="distance">${distance.toFixed(1)}</span>
+          </div>
+        `;
+      }).join("");
+      const pending = goalInvites
+        .filter((invite) => invite.goalId === goal.id && invite.status === INVITE_STATUS.PENDING)
+        .map((invite) => `
+          <div class="row compact">
+            ${createAvatar(invite.inviteeId)}
+            <div class="row-main">
+              <strong>${escapeHTML(users[invite.inviteeId].name)}</strong>
+              <span>Invite pending</span>
+            </div>
+            <span class="tiny-pill yellow">Pending</span>
+          </div>
+        `).join("");
+      return `<div class="row-list">${rows}${pending}</div>`;
+    }
+
+    function renderRecentActivity(goal) {
+      const items = getGoalContributions(goal.id)
+        .slice()
+        .sort((a, b) => new Date(b.syncedAt).getTime() - new Date(a.syncedAt).getTime())
+        .slice(0, 3);
+      if (!items.length) {
+        return `
+          <div class="notice">
+            <strong>Your goal has started</strong>
+            <span class="muted">The first eligible Run or Trail Run will move the team forward. Future contributions appear here as lightweight progress events.</span>
+          </div>
+        `;
+      }
+      return `
+        <div class="row-list">
+          ${items.map((item) => `
+            <div class="row compact">
+              ${createAvatar(item.userId)}
+              <div class="row-main">
+                <strong>${escapeHTML(users[item.userId].name)} contributed ${formatKm(item.distance)}</strong>
+                <span>${escapeHTML(item.activityType)} · synced ${timeAgo(item.syncedAt)}</span>
+              </div>
+              <span class="tiny-pill green">Added</span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function timeAgo(iso) {
+      const hours = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / (60 * 60 * 1000)));
+      if (hours < 24) return `${hours}h ago`;
+      return `${Math.round(hours / 24)}d ago`;
+    }
+
+    function renderDetail() {
+      refreshGoalStatus(activeGoal);
+      if (!activeGoal) {
+        return `
+          <div class="stack">
+            <section class="card empty">
+              <div class="empty-mark">◎</div>
+              <div>
+                <h2 class="page-title">No active Crew Goal</h2>
+                <p class="muted">Create a 7-day distance goal to start shared progress.</p>
+              </div>
+              <button class="btn primary" type="button" data-action="start-goal">Start a Goal</button>
+            </section>
+          </div>
+        `;
+      }
+      const stats = progress(activeGoal);
+      const state = onTrackLabel(activeGoal);
+      return `
+        <div class="stack">
+          ${renderRouteCard(activeGoal)}
+          <section class="card">
+            <div class="section-title">
+              <span>Current status</span>
+              <span>${escapeHTML(state)}</span>
+            </div>
+            <div class="metric-grid">
+              <div class="metric">
+                <strong>${formatKm(stats.total).replace(" km", "")}</strong>
+                <span>completed</span>
+              </div>
+              <div class="metric">
+                <strong>${formatKm(stats.left).replace(" km", "")}</strong>
+                <span>left</span>
+              </div>
+              <div class="metric">
+                <strong>${elapsedDays(activeGoal)}</strong>
+                <span>days in</span>
+              </div>
+            </div>
+          </section>
+          <section class="card">
+            <div class="section-title">
+              <span>Member contributions</span>
+              <span>Team first</span>
+            </div>
+            ${renderMemberRows(activeGoal)}
+          </section>
+          <section class="card">
+            <div class="section-title">
+              <span>Recent activity</span>
+              <span>Last 3</span>
+            </div>
+            ${renderRecentActivity(activeGoal)}
+          </section>
+          <div class="button-row">
+            <button class="btn" type="button" data-action="share">Share Progress</button>
+            <button class="btn primary" type="button" data-route="${activeGoal.status === GOAL_STATUS.ACTIVE ? "summary" : activeGoal.status === GOAL_STATUS.COMPLETED ? "completed" : "expired"}">${activeGoal.status === GOAL_STATUS.ACTIVE ? "Start a Run" : "View Result"}</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSummary() {
+      const active = hasActiveGoal();
+      const hasLogged = activeGoal && contributions.some((item) => item.activityId === pendingActivity.activityId);
+      const ineligible = activeGoal && isEligibleActivity(ineligibleActivity, activeGoal);
+      return `
+        <div class="stack">
+          <section class="activity-card">
+            <div class="activity-head">
+              <div>
+                <div class="eyebrow">Morning Run</div>
+                <h2>Harbor Tempo</h2>
+              </div>
+              <span class="tiny-pill green">Synced</span>
+            </div>
+            <div class="activity-map">
+              <svg viewBox="0 0 342 150" aria-label="Workout route">
+                <path d="M-20 32 C35 5 72 54 128 30 S228 2 362 26" fill="none" stroke="rgba(31,36,39,.08)" stroke-width="1"/>
+                <path d="M-18 82 C42 52 92 104 154 76 S244 48 360 70" fill="none" stroke="rgba(31,36,39,.08)" stroke-width="1"/>
+                <path d="M28 116 C62 88 82 46 126 48 C169 50 178 96 216 92 C252 88 272 54 314 36" fill="none" stroke="#ff7c3b" stroke-width="7" stroke-linecap="round"/>
+                <circle cx="28" cy="116" r="5" fill="#1f2427"/>
+                <circle cx="314" cy="36" r="6" fill="#16b4ea"/>
+              </svg>
+            </div>
+            <div class="metric-grid">
+              <div class="metric">
+                <strong>12.4</strong>
+                <span>km</span>
+              </div>
+              <div class="metric">
+                <strong>5:18</strong>
+                <span>avg pace</span>
+              </div>
+              <div class="metric">
+                <strong>Run</strong>
+                <span>eligible type</span>
+              </div>
+            </div>
+          </section>
+
+          ${active ? renderContributionCard(hasLogged) : renderNoGoalContribution()}
+
+          <section class="notice ${ineligible ? "" : "attention"}">
+            <strong>Example rule: Cycling would not count</strong>
+            <span class="muted">Crew Goals Phase 1 only counts Run and Trail Run from trusted activity sources within the active 7-day window. Manual entries do not count.</span>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderContributionCard(hasLogged) {
+      if (syncState === "updating") {
+        return `
+          <section class="notice attention">
+            <strong>Updating crew progress</strong>
+            <span class="muted">Your run has synced. Crew Goal contribution is being checked.</span>
+          </section>
+        `;
+      }
+      if (syncState === "ineligible") {
+        return `
+          <section class="notice attention">
+            <strong>Not counted</strong>
+            <span class="muted">This activity does not meet Crew Goal rules. Phase 1 counts trusted Run and Trail Run activities only.</span>
+            <button class="btn" type="button" data-route="detail">View Goal Rules</button>
+          </section>
+        `;
+      }
+      if (syncState === "duplicate") {
+        return `
+          <section class="notice success">
+            <strong>Already counted</strong>
+            <span class="muted">This activity has already contributed to ${escapeHTML(activeGoal.title)}. Duplicate sync is ignored.</span>
+            <button class="btn primary" type="button" data-route="detail">View Goal</button>
+          </section>
+        `;
+      }
+      if (hasLogged && lastSyncImpact) {
+        const completed = activeGoal.status === GOAL_STATUS.COMPLETED;
+        return `
+          <section class="notice success">
+            <div class="section-title">
+              <span>${completed ? "Goal completed" : "Crew progress updated"}</span>
+              <span>+${formatKm(lastSyncImpact.distance)}</span>
+            </div>
+            <div class="metric-grid">
+              <div class="metric">
+                <strong>${lastSyncImpact.before.toFixed(1)}</strong>
+                <span>before</span>
+              </div>
+              <div class="metric">
+                <strong>${lastSyncImpact.after.toFixed(1)}</strong>
+                <span>after</span>
+              </div>
+              <div class="metric">
+                <strong>${daysLeft(activeGoal)}</strong>
+                <span>days left</span>
+              </div>
+            </div>
+            <button class="btn primary" type="button" data-route="${completed ? "completed" : "detail"}">${completed ? "View Result" : "View Goal"}</button>
+          </section>
+        `;
+      }
+      if (hasLogged) {
+        return `
+          <section class="notice success">
+            <strong>Already counted</strong>
+            <span class="muted">This activity has already contributed to ${escapeHTML(activeGoal.title)}. Duplicate counting is blocked.</span>
+            <button class="btn primary" type="button" data-route="detail">View Goal</button>
+          </section>
+        `;
+      }
+      return `
+        <section class="notice attention">
+          <strong>Updating crew progress</strong>
+          <span class="muted">This eligible Run will be added once sync completes.</span>
+        </section>
+      `;
+    }
+
+    function renderNoGoalContribution() {
+      return `
+        <section class="notice">
+          <strong>No active Crew Goal</strong>
+          <span class="muted">Start a 7-day team goal and your future eligible runs will add automatically.</span>
+          <button class="btn primary" type="button" data-action="start-goal">Start a Goal</button>
+        </section>
+      `;
+    }
+
+    function renderInbox() {
+      return `
+        <div class="stack">
+          <section class="card">
+            <div class="section-title">
+              <span>Goal invites</span>
+              <span>${goalInvites.length} examples</span>
+            </div>
+            <div class="row-list">
+              ${goalInvites.map((invite) => {
+                const invalid = invite.status === INVITE_STATUS.INVALID || invite.invalidReason;
+                const inviter = users[invite.inviterId];
+                return `
+                  <button class="choice" type="button" data-action="open-invite" data-id="${invite.id}">
+                    <span>
+                      <strong>${escapeHTML(inviter.name)} invited you</strong>
+                      <span class="muted">${escapeHTML(invite.title)} · ${invite.targetDistance} km · ${invite.memberIds.length}/4 members</span>
+                    </span>
+                    <span class="tiny-pill ${invalid ? "yellow" : "blue"}">${invalid ? "Invalid" : invite.status}</span>
+                  </button>
+                `;
+              }).join("")}
+            </div>
+          </section>
+        </div>
+      `;
+    }
+
+    function renderJoin() {
+      const invite = goalInvites.find((item) => item.id === selectedInviteId) || goalInvites[0];
+      const invalidFull = invite.memberIds.length >= 4 || invite.invalidReason === "full";
+      const invalidEnded = new Date(invite.endTime).getTime() <= Date.now() || new Date(invite.expiresAt || invite.endTime).getTime() <= Date.now() || invite.invalidReason === "ended";
+      const invalid = invalidFull || invalidEnded || invite.status === INVITE_STATUS.IGNORED || invite.status === INVITE_STATUS.INVALID;
+      const activeBlocked = hasActiveGoal();
+      const inviter = users[invite.inviterId];
+      let message = "Run on your own schedule. Only runs completed after you join will count toward this goal.";
+      if (invalidFull) message = "This Crew Goal is already full, so the invite is no longer available.";
+      if (invalidEnded) message = "This Crew Goal has ended, so the invite is no longer available.";
+      if (invite.status === INVITE_STATUS.IGNORED) message = "You ignored this invite.";
+      if (!invalid && activeBlocked) message = "You already have one active Crew Goal. Finish it before joining another.";
+      const cta = invalid
+        ? `
+          <div class="button-row">
+            <button class="btn" type="button" data-route="home">Back Home</button>
+            <button class="btn primary" type="button" data-route="goals">View Goals</button>
+          </div>
+        `
+        : activeBlocked
+          ? `
+            <div class="button-row">
+              <button class="btn" type="button" data-action="ignore-invite" data-id="${invite.id}">Not now</button>
+              <button class="btn primary" type="button" data-route="detail">View Current Goal</button>
+            </div>
+          `
+          : `
+            <div class="button-row">
+              <button class="btn" type="button" data-action="ignore-invite" data-id="${invite.id}">Not now</button>
+              <button class="btn primary" type="button" data-action="join-invite" data-id="${invite.id}">Join Goal</button>
+            </div>
+          `;
+      return `
+        <div class="stack">
+          <section class="card">
+            <div class="row">
+              ${createAvatar(invite.inviterId)}
+              <div class="row-main">
+                <strong>${escapeHTML(inviter.name)} invited you</strong>
+                <span>${escapeHTML(invite.title)}</span>
+              </div>
+              <span class="tiny-pill ${invalid ? "yellow" : "blue"}">${invalid ? "Unavailable" : "Invite"}</span>
+            </div>
+          </section>
+          <section class="card">
+            <div class="metric-grid">
+              <div class="metric">
+                <strong>${invite.targetDistance}</strong>
+                <span>km goal</span>
+              </div>
+              <div class="metric">
+                <strong>7</strong>
+                <span>days</span>
+              </div>
+              <div class="metric">
+                <strong>${invite.memberIds.length}</strong>
+                <span>members</span>
+              </div>
+            </div>
+          </section>
+          <section class="notice ${invalid || activeBlocked ? "attention" : "success"}">
+            <strong>${invalid ? "Invite unavailable" : "Asynchronous team goal"}</strong>
+            <span class="muted">${escapeHTML(message)}</span>
+          </section>
+          ${cta}
+        </div>
+      `;
+    }
+
+    function renderResultSummary(goal) {
+      const stats = progress(goal);
+      return `
+        <section class="card">
+          <div class="section-title">
+            <span>${escapeHTML(goal.title)}</span>
+            <span>${escapeHTML(goal.status)}</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric">
+              <strong>${stats.total.toFixed(1)}</strong>
+              <span>total km</span>
+            </div>
+            <div class="metric">
+              <strong>${goal.targetDistance}</strong>
+              <span>target</span>
+            </div>
+            <div class="metric">
+              <strong>${resultDays(goal)}</strong>
+              <span>${goal.status === GOAL_STATUS.EXPIRED ? "days locked" : "days"}</span>
+            </div>
+          </div>
+          <button class="btn primary" type="button" data-route="${goal.status === GOAL_STATUS.EXPIRED ? "expired" : "completed"}">View result</button>
+        </section>
+      `;
+    }
+
+    function renderResult(type) {
+      const goal = type === "expired" ? (selectedResultGoal || historyGoals[0]) : (selectedResultGoal || activeGoal);
+      const stats = progress(goal);
+      const completed = type === "completed";
+      return `
+        <div class="stack">
+          <section class="card route-card result-hero">
+            ${routeSvg(goal)}
+            <div class="route-content">
+              <div class="eyebrow">${completed ? "Crew completed" : "Crew ended"}</div>
+              <h2 class="page-title" style="color:white">${escapeHTML(goal.title)}</h2>
+              <div class="large-number">${stats.total.toFixed(1)}<small>/ ${goal.targetDistance} km</small></div>
+              <p class="muted">${completed ? `Finished in ${plural(resultDays(goal), "day")}` : `A solid ${plural(goalDurationDays(goal), "day")} training week, even without reaching the full distance.`}</p>
+            </div>
+          </section>
+          <section class="card">
+            <div class="section-title">
+              <span>Member contributions</span>
+              <span>${goal.memberIds.length} members</span>
+            </div>
+            ${goal.id === activeGoal?.id ? renderMemberRows(goal) : renderHistoryRows(goal)}
+          </section>
+          <div class="button-row">
+            <button class="btn" type="button" data-action="share-result">Share Result</button>
+            <button class="btn primary" type="button" data-action="start-another">Start Another Goal</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderHistoryRows(goal) {
+      const parts = [
+        { id: "u1", distance: 14.2 },
+        { id: "u2", distance: 16.1 },
+        { id: "u5", distance: 8.3 }
+      ];
+      return `
+        <div class="row-list">
+          ${parts.map((item) => `
+            <div class="row">
+              ${createAvatar(item.id)}
+              <div class="row-main">
+                <strong>${escapeHTML(users[item.id].name)}</strong>
+                <span>${formatKm(item.distance)} contributed</span>
+                <div class="progress-line"><div class="progress-fill" style="--progress:${Math.round((item.distance / goal.targetDistance) * 100)}%"></div></div>
+              </div>
+              <span class="distance">${item.distance.toFixed(1)}</span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderScreen() {
+      if (route === "home") return renderHome();
+      if (route === "goals") return renderGoalsHub();
+      if (route === "create") return renderCreate();
+      if (route === "friends") return renderFriends();
+      if (route === "preview") return renderPreview();
+      if (route === "detail") return renderDetail();
+      if (route === "summary") return renderSummary();
+      if (route === "inbox") return renderInbox();
+      if (route === "join") return renderJoin();
+      if (route === "completed") return renderResult("completed");
+      if (route === "expired") return renderResult("expired");
+      return renderHome();
+    }
+
+    function applyDemoState() {
+      const params = new URLSearchParams(window.location.search);
+      const state = params.get("state") || "active";
+      if (state === "empty") {
+        activeGoal = null;
+        selectedResultGoal = null;
+        route = "home";
+      }
+      if (state === "invite") {
+        activeGoal = null;
+        selectedResultGoal = null;
+        selectedInviteId = "invite-valid";
+        route = "join";
+      }
+      if (state === "completed") {
+        const completedAt = new Date(Date.now() - 2 * DAY_MS).toISOString();
+        activeGoal = {
+          ...activeGoal,
+          status: GOAL_STATUS.COMPLETED,
+          completedAt,
+          resultLockedAt: completedAt,
+          finalDistance: 52.4
+        };
+        selectedResultGoal = activeGoal;
+        route = "completed";
+      }
+      if (state === "expired") {
+        activeGoal = null;
+        selectedResultGoal = historyGoals[0];
+        route = "expired";
+      }
+      if (state === "postrun") {
+        const alreadyLogged = contributions.some((item) => item.activityId === pendingActivity.activityId);
+        const before = totalContribution(activeGoal);
+        if (!alreadyLogged && activeGoal) {
+          contributions.push({
+            goalId: activeGoal.id,
+            activityId: pendingActivity.activityId,
+            userId: pendingActivity.userId,
+            distance: pendingActivity.distance,
+            activityType: pendingActivity.activityType,
+            activitySource: pendingActivity.activitySource,
+            activityEndTime: pendingActivity.activityEndTime,
+            syncedAt: new Date().toISOString(),
+            countedAt: new Date().toISOString(),
+            status: "Counted"
+          });
+        }
+        lastSyncImpact = { before, after: totalContribution(activeGoal), distance: pendingActivity.distance };
+        syncState = "synced";
+        refreshGoalStatus(activeGoal);
+        route = "summary";
+      }
+    }
+
+    function renderShareSheet() {
+      const node = document.getElementById("sheet");
+      if (!shareSheet) {
+        node.classList.remove("show");
+        node.innerHTML = "";
+        return;
+      }
+      const goal = shareSheet.goal;
+      const stats = progress(goal);
+      const resultMode = shareSheet.type === "result";
+      node.classList.add("show");
+      node.innerHTML = `
+        <div class="sheet-panel" role="dialog" aria-label="${resultMode ? "Share result" : "Share progress"}">
+          <div class="section-title">
+            <span>${resultMode ? "Share Result" : "Share Progress"}</span>
+            <button class="icon-button ghost" type="button" data-action="close-share" title="Close">×</button>
+          </div>
+          <div class="share-preview">
+            <div class="eyebrow">Crew Goals</div>
+            <h2 class="page-title" style="color:white">${escapeHTML(goal.title)}</h2>
+            <div class="large-number">${stats.total.toFixed(1)}<small>/ ${goal.targetDistance} km</small></div>
+            <p class="muted">${resultMode ? `${goal.memberIds.length} members · ${plural(resultDays(goal), "day")}` : `${formatKm(stats.left)} left · ${plural(daysLeft(goal), "day")} left`}</p>
+          </div>
+          <p class="muted">Sharing uses team-level progress only. Member contribution details, routes, pace, heart rate, and maps stay private.</p>
+          <button class="btn primary" type="button" data-action="close-share">Done</button>
+        </div>
+      `;
+    }
+
+    function render() {
+      renderAppBar();
+      document.getElementById("app").innerHTML = renderScreen();
+      renderShareSheet();
+      document.querySelectorAll(".nav-item").forEach((item) => {
+        const itemRoute = item.getAttribute("data-route");
+        const active = route === itemRoute || (itemRoute === "goals" && ["create", "friends", "preview", "detail", "completed", "expired"].includes(route));
+        item.classList.toggle("active", active);
+      });
+    }
+
+    document.addEventListener("click", (event) => {
+      const routeTarget = event.target.closest("[data-route]");
+      const actionTarget = event.target.closest("[data-action]");
+      if (routeTarget && !actionTarget) {
+        if (route === "home") track("crew_goal_entry_click");
+        navigate(routeTarget.getAttribute("data-route"));
+        return;
+      }
+      if (!actionTarget) return;
+      const action = actionTarget.getAttribute("data-action");
+      const id = actionTarget.getAttribute("data-id");
+      if (action === "back") goBack();
+      if (action === "start-goal") startGoalFlow(false);
+      if (action === "start-another") startGoalFlow(true);
+      if (action === "continue-friends") navigate("preview");
+      if (action === "send-invites") sendInvites();
+      if (action === "select-recommendation") {
+        selectedRecommendation = id;
+        track("crew_goal_recommendation_selected");
+        render();
+      }
+      if (action === "toggle-friend") {
+        if (selectedFriendIds.includes(id)) {
+          selectedFriendIds = selectedFriendIds.filter((friendId) => friendId !== id);
+        } else if (selectedFriendIds.length < 3) {
+          selectedFriendIds = [...selectedFriendIds, id];
+        } else {
+          toast("Crew Goals support up to 4 members including you.");
+        }
+        render();
+      }
+      if (action === "share") {
+        track("crew_goal_share_progress");
+        openShareSheet("progress", activeGoal);
+      }
+      if (action === "share-result") {
+        track("crew_goal_share_result");
+        openShareSheet("result", selectedResultGoal || activeGoal);
+      }
+      if (action === "close-share") {
+        closeShareSheet();
+      }
+      if (action === "open-invite") {
+        navigate("join", { inviteId: id });
+      }
+      if (action === "ignore-invite") {
+        const invite = goalInvites.find((item) => item.id === id);
+        if (invite) {
+          invite.status = INVITE_STATUS.IGNORED;
+          invite.ignoredAt = new Date().toISOString();
+        }
+        track("crew_goal_invite_ignored");
+        navigate("inbox", { replace: true });
+      }
+      if (action === "join-invite") {
+        joinInvite(goalInvites.find((item) => item.id === id));
+      }
+      if (action === "view-expired") {
+        selectedResultGoal = historyGoals[0];
+        navigate("expired");
+      }
+    });
+
+    document.addEventListener("input", (event) => {
+      const input = event.target.closest("[data-input='friend-search']");
+      if (!input) return;
+      searchQuery = input.value;
+      render();
+      const nextInput = document.querySelector("[data-input='friend-search']");
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.setSelectionRange(searchQuery.length, searchQuery.length);
+      }
+    });
+
+    applyDemoState();
+    track("crew_goal_entry_impression");
+    render();
+  </script>
+</body>
+</html>

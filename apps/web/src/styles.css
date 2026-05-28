@@ -1,0 +1,262 @@
+:root {
+  color: #f5fbff;
+  background:
+    radial-gradient(circle at top, rgba(44, 168, 220, 0.28), transparent 28%),
+    linear-gradient(180deg, #071018 0%, #0a141d 54%, #081018 100%);
+  font-family:
+    "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.shell {
+  min-height: 100vh;
+  padding: 0;
+}
+
+.phone {
+  width: min(100%, 430px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 18px 14px 32px;
+  display: grid;
+  gap: 14px;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 6px 0;
+  color: #9cb3c6;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-card,
+.panel,
+.status-card {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 26px;
+  background: rgba(8, 15, 23, 0.82);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px);
+}
+
+.hero-card {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+  background:
+    linear-gradient(160deg, rgba(34, 197, 94, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(44, 168, 220, 0.2), rgba(8, 15, 23, 0.9)),
+    rgba(8, 15, 23, 0.88);
+}
+
+.hero-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hero-card__body {
+  display: grid;
+  gap: 12px;
+}
+
+.hero-card__body h1,
+.section-heading h2 {
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+.hero-card__body h1 {
+  max-width: 9ch;
+  font-size: 2.7rem;
+  line-height: 0.94;
+}
+
+.hero-card__body p,
+.rule-item p,
+.info-card p,
+.status-card p {
+  margin: 0;
+  color: #bdd0df;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #77d4ff;
+  font-size: 0.77rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #d9eef8;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stat-card,
+.rule-item,
+.info-card {
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 20px;
+  background: rgba(15, 23, 32, 0.74);
+}
+
+.stat-card {
+  display: grid;
+  gap: 4px;
+  min-height: 82px;
+  padding: 14px 12px;
+}
+
+.stat-card span,
+.info-card span,
+.status-card__label {
+  color: #93a9bb;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stat-card strong,
+.info-card strong,
+.status-card strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.hero-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 18px;
+  cursor: pointer;
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+}
+
+.button--primary {
+  color: #082033;
+  background: linear-gradient(135deg, #72e7ff, #39bdf8);
+  font-weight: 700;
+}
+
+.button--ghost {
+  color: #d9eef8;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.panel,
+.status-card {
+  padding: 18px;
+}
+
+.section-heading {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.section-heading h2 {
+  font-size: 1.35rem;
+  line-height: 1.1;
+}
+
+.rule-list,
+.stack-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rule-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  align-items: start;
+  gap: 12px;
+  padding: 14px;
+}
+
+.rule-item__mark {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #72e7ff;
+  color: #082033;
+  font-weight: 700;
+}
+
+.info-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.status-card {
+  display: grid;
+  gap: 10px;
+}
+
+.status-card > div {
+  display: grid;
+  gap: 4px;
+}
+
+@media (min-width: 431px) {
+  .shell {
+    padding: 0 0 28px;
+  }
+
+  .phone {
+    margin-top: 14px;
+  }
+}
