@@ -62,6 +62,11 @@ CREATE TABLE IF NOT EXISTS goal_contributions (
   status TEXT NOT NULL,
   ignored_reason TEXT
 );
+
+CREATE TABLE IF NOT EXISTS app_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 `;
 
 export function createDatabase(dbFile = defaultFile) {
