@@ -1,6 +1,7 @@
 import {
   integer,
   real,
+  uniqueIndex,
   sqliteTable,
   text
 } from "drizzle-orm/sqlite-core";
@@ -29,7 +30,12 @@ export const goalMembers = sqliteTable("goal_members", {
   role: text("role").notNull(),
   joinTime: text("join_time").notNull(),
   contributionDistance: real("contribution_distance").notNull().default(0)
-});
+}, (table) => ({
+  goalUserUnique: uniqueIndex("goal_members_goal_user_unique").on(
+    table.goalId,
+    table.userId
+  )
+}));
 
 export const goalInvites = sqliteTable("goal_invites", {
   id: text("id").primaryKey(),
@@ -58,4 +64,3 @@ export const goalContributions = sqliteTable("goal_contributions", {
   status: text("status").notNull(),
   ignoredReason: text("ignored_reason")
 });
-

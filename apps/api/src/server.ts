@@ -58,7 +58,7 @@ export function createServer(
 
   void registerHomeRoutes(app, createReadRepository);
   void registerGoalRoutes(app, createReadRepository, createDbRepository);
-  void registerInviteRoutes(app, createReadRepository);
+  void registerInviteRoutes(app, createReadRepository, createDbRepository);
 
   return app;
 }

@@ -78,6 +78,15 @@ export interface CreateGoalResult {
   inviteIds: string[];
 }
 
+export interface AcceptInviteResult {
+  inviteId: string;
+  goalId: string;
+}
+
+export interface IgnoreInviteResult {
+  inviteId: string;
+}
+
 export interface CrewGoalsReadRepository {
   getViewer(): CrewUserProfile;
   getActiveGoal(): CrewGoalRecord | null;
@@ -91,4 +100,6 @@ export interface CrewGoalsReadRepository {
 
 export interface CrewGoalsWriteRepository extends CrewGoalsReadRepository {
   createGoal(input: CreateGoalInput): CreateGoalResult;
+  acceptInvite(inviteId: string): AcceptInviteResult;
+  ignoreInvite(inviteId: string): IgnoreInviteResult;
 }

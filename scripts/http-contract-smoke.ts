@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { createGoalService } from "../apps/api/src/modules/goals/create-goal-service.js";
 import { createGoalsService } from "../apps/api/src/modules/goals/goals-service.js";
 import { createHomeEntryService } from "../apps/api/src/modules/home/home-entry-service.js";
+import { createInviteActionsService } from "../apps/api/src/modules/invites/invite-actions-service.js";
 import { createInvitesService } from "../apps/api/src/modules/invites/invites-service.js";
 import { createRecommendationsService } from "../apps/api/src/modules/recommendations/recommendations-service.js";
 import { MockCrewGoalsReadRepository } from "../apps/api/src/repositories/mock-crew-goals-read-repository.js";
@@ -81,6 +82,53 @@ async function main() {
     "created goal should persist the recommendation source"
   );
   assert.equal(createdGoalDetail?.pendingInvites.length, 2, "created goal pending invite count");
+
+  const noraRepository = new SqliteCrewGoalsReadRepository(createDatabaseResult.sqlite, {
+    now,
+    viewerId: "nora"
+  });
+  const accepted = createInviteActionsService(noraRepository).acceptInvite(createdGoal.inviteIds[0]!);
+  assert.equal(accepted.goalId, createdGoal.goalId, "accepted invite goal id");
+  const acceptedGoalDetail = createGoalsService(createRepository).getGoalDetail(createdGoal.goalId);
+  assert.ok(
+    acceptedGoalDetail && acceptedGoalDetail.screen === "goal_detail",
+    "accepted goal should be readable"
+  );
+  assert.equal(acceptedGoalDetail.members.length, 2, "accepted invite should add member");
+  assert.equal(
+    noraRepository.getInviteById(createdGoal.inviteIds[0]!)?.status,
+    "accepted",
+    "accepted invite status"
+  );
+  assert.throws(
+    () => createInviteActionsService(noraRepository).acceptInvite(createdGoal.inviteIds[0]!),
+    /invite_unavailable/,
+    "accepted invite should not be accepted twice"
+  );
+  const afterDuplicateAcceptGoalDetail = createGoalsService(createRepository).getGoalDetail(
+    createdGoal.goalId
+  );
+  assert.ok(
+    afterDuplicateAcceptGoalDetail && afterDuplicateAcceptGoalDetail.screen === "goal_detail",
+    "goal should still be readable after duplicate accept"
+  );
+  assert.equal(
+    afterDuplicateAcceptGoalDetail.members.length,
+    2,
+    "accepted invite should not duplicate members"
+  );
+
+  const isaacRepository = new SqliteCrewGoalsReadRepository(createDatabaseResult.sqlite, {
+    now,
+    viewerId: "isaac"
+  });
+  const ignoreResult = createInviteActionsService(isaacRepository).ignoreInvite(createdGoal.inviteIds[1]!);
+  assert.equal(ignoreResult.inviteId, createdGoal.inviteIds[1], "ignored invite id");
+  assert.equal(
+    isaacRepository.getInviteById(createdGoal.inviteIds[1]!)?.status,
+    "ignored",
+    "ignored invite status"
+  );
   createDatabaseResult.sqlite.close();
 
   const app = createServer({
@@ -123,6 +171,18 @@ async function main() {
     409,
     "default create goal should reject active goal conflict"
   );
+
+  const blockedAcceptResponse = await app.inject({
+    method: "POST",
+    url: "/api/invites/invite_zoe_weekly_push/accept"
+  });
+  assert.equal(blockedAcceptResponse.statusCode, 409, "blocked invite accept should conflict with active goal");
+
+  const ignoreResponse = await app.inject({
+    method: "POST",
+    url: "/api/invites/invite_zoe_weekly_push/ignore"
+  });
+  assert.equal(ignoreResponse.statusCode, 200, "ignore invite should succeed");
 
   let clock = new Date("2026-05-29T12:00:00.000Z");
   const timeAwareApp = createServer({

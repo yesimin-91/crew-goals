@@ -67,6 +67,9 @@ CREATE TABLE IF NOT EXISTS app_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS goal_members_goal_user_unique
+ON goal_members (goal_id, user_id);
 `;
 
 export function createDatabase(dbFile = defaultFile) {

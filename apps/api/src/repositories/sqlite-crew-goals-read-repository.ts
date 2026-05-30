@@ -12,6 +12,7 @@ import {
 } from "../mock/crew-goals-mock-data.js";
 import { USER_PROFILES, VIEWER_ID } from "../lib/crew-users.js";
 import type {
+  AcceptInviteResult,
   CreateGoalInput,
   CreateGoalResult,
   CrewGoalActivityRecord,
@@ -21,7 +22,8 @@ import type {
   CrewGoalsWriteRepository,
   CrewInviteRecord,
   CrewPendingInviteRecord,
-  CrewUserProfile
+  CrewUserProfile,
+  IgnoreInviteResult
 } from "./crew-goals-read-repository.js";
 
 const CREW_LIMIT = 4;
@@ -446,6 +448,78 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
     };
   }
 
+  acceptInvite(inviteId: string): AcceptInviteResult {
+    const invite = this.getInviteById(inviteId);
+
+    if (!invite) {
+      throw new Error(`Invite ${inviteId} was not found`);
+    }
+
+    const now = this.getNow().toISOString();
+    const accept = this.sqlite.transaction(() => {
+      const updateResult = this.sqlite
+        .prepare(
+          `UPDATE goal_invites
+           SET status = 'accepted', accepted_at = ?
+           WHERE id = ? AND status = 'pending'`
+        )
+        .run(now, inviteId);
+
+      if (updateResult.changes !== 1) {
+        throw new Error("invite_unavailable");
+      }
+
+      this.sqlite
+        .prepare(
+          `INSERT INTO goal_members (
+            goal_id,
+            user_id,
+            role,
+            join_time,
+            contribution_distance
+          ) VALUES (?, ?, ?, ?, ?)`
+        )
+        .run(invite.goalId, invite.inviteeId, "member", now, 0);
+    });
+
+    try {
+      accept();
+    } catch (error) {
+      if (isSqliteUniqueConstraintError(error)) {
+        throw new Error("invite_unavailable");
+      }
+
+      throw error;
+    }
+
+    return {
+      inviteId,
+      goalId: invite.goalId
+    };
+  }
+
+  ignoreInvite(inviteId: string): IgnoreInviteResult {
+    const invite = this.getInviteById(inviteId);
+
+    if (!invite) {
+      throw new Error(`Invite ${inviteId} was not found`);
+    }
+
+    const updateResult = this.sqlite
+      .prepare(
+        `UPDATE goal_invites
+         SET status = 'ignored', ignored_at = ?
+         WHERE id = ? AND status = 'pending'`
+      )
+      .run(this.getNow().toISOString(), inviteId);
+
+    if (updateResult.changes !== 1) {
+      throw new Error("invite_unavailable");
+    }
+
+    return { inviteId };
+  }
+
   private get viewerId() {
     return this.options.viewerId ?? VIEWER_ID;
   }
@@ -540,4 +614,12 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
 
 function buildInviteId(goalId: string, inviteeId: string): string {
   return `invite_${goalId}_${inviteeId}`;
+}
+
+function isSqliteUniqueConstraintError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    "code" in error &&
+    (error as { code?: string }).code === "SQLITE_CONSTRAINT_UNIQUE"
+  );
 }

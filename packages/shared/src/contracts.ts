@@ -271,6 +271,18 @@ export interface CreateGoalResponse {
   inviteIds: string[];
 }
 
+export interface AcceptInviteResponse {
+  screen: "invite_accepted";
+  inviteId: string;
+  goalId: string;
+  detailHref: string;
+}
+
+export interface IgnoreInviteResponse {
+  screen: "invite_ignored";
+  inviteId: string;
+}
+
 // Temporary web migration models. These are compatibility shapes for the current
 // frontend pages and are not the canonical API DTOs above.
 export type WebCompatHighlightItem = EntryHighlight;
