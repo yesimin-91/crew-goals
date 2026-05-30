@@ -78,4 +78,18 @@ export async function registerGoalRoutes(
 
     return detail;
   });
+
+  app.get("/api/goals/:goalId/result", async (request, reply) => {
+    const { goalId } = request.params as { goalId: string };
+    const repository = createWriteRepository();
+    const result = repository.getGoalResult(goalId);
+
+    if (!result) {
+      return reply.code(404).send({
+        message: `Goal result ${goalId} was not found`
+      });
+    }
+
+    return result;
+  });
 }

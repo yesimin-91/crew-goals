@@ -13,20 +13,25 @@ import {
   SqliteCrewGoalsReadRepository
 } from "./repositories/sqlite-crew-goals-read-repository.js";
 import { registerGoalRoutes } from "./routes/goals-routes.js";
+import { registerContributionRoutes } from "./routes/contributions-routes.js";
 import { registerHomeRoutes } from "./routes/home-routes.js";
 import { registerInviteRoutes } from "./routes/invites-routes.js";
 
 export function createServer(
   options: {
     now?: () => Date;
+    database?: ReturnType<typeof createDatabase>;
+    seedDemoData?: boolean;
   } = {}
 ) {
   const app = Fastify({
     logger: true
   });
 
-  const database = createDatabase();
-  seedCrewGoalsReadData(database.sqlite, options.now?.() ?? new Date());
+  const database = options.database ?? createDatabase();
+  if (options.seedDemoData !== false) {
+    seedCrewGoalsReadData(database.sqlite, options.now?.() ?? new Date());
+  }
   const createDbRepository = (): CrewGoalsWriteRepository => {
     return new SqliteCrewGoalsReadRepository(database.sqlite, {
       now: options.now?.() ?? new Date()
@@ -58,6 +63,7 @@ export function createServer(
 
   void registerHomeRoutes(app, createReadRepository);
   void registerGoalRoutes(app, createReadRepository, createDbRepository);
+  void registerContributionRoutes(app, createDbRepository);
   void registerInviteRoutes(app, createReadRepository, createDbRepository);
 
   return app;

@@ -184,6 +184,123 @@ async function main() {
   });
   assert.equal(ignoreResponse.statusCode, 200, "ignore invite should succeed");
 
+  const countedContribution = await app.inject({
+    method: "POST",
+    url: "/api/contributions/sync",
+    payload: {
+      activityId: "act_sync_001",
+      distanceKm: 7.2,
+      activityType: "run",
+      activitySource: "suunto",
+      activityEndTime: "2026-05-29T10:00:00.000Z"
+    }
+  });
+  assert.equal(countedContribution.statusCode, 200, "counted contribution status");
+  assert.equal(countedContribution.json().outcome, "counted", "counted contribution outcome");
+
+  const duplicateContribution = await app.inject({
+    method: "POST",
+    url: "/api/contributions/sync",
+    payload: {
+      activityId: "act_sync_001",
+      distanceKm: 7.2,
+      activityType: "run",
+      activitySource: "suunto",
+      activityEndTime: "2026-05-29T10:00:00.000Z"
+    }
+  });
+  assert.equal(duplicateContribution.json().outcome, "already_counted", "duplicate contribution outcome");
+
+  const ineligibleContribution = await app.inject({
+    method: "POST",
+    url: "/api/contributions/sync",
+    payload: {
+      activityId: "act_sync_002",
+      distanceKm: 4.3,
+      activityType: "walk",
+      activitySource: "suunto",
+      activityEndTime: "2026-05-29T11:00:00.000Z"
+    }
+  });
+  assert.equal(ineligibleContribution.json().reasonCode, "activity_type", "ineligible contribution reason");
+
+  const postRunResponse = await app.inject({
+    method: "GET",
+    url: "/api/post-run/act_sync_001"
+  });
+  assert.equal(postRunResponse.statusCode, 200, "post-run route status");
+  assert.equal(postRunResponse.json().state, "counted", "post-run route state");
+
+  const completedDbDir = mkdtempSync(join(tmpdir(), "crew-goals-complete-"));
+  const completedDb = createDatabase(join(completedDbDir, "crew-goals.sqlite"));
+  seedCrewGoalsReadData(completedDb.sqlite, now);
+  const completedRepository = new SqliteCrewGoalsReadRepository(completedDb.sqlite, {
+    now,
+    viewerId: "mia"
+  });
+  completedRepository.syncContribution({
+    activityId: "act_sync_003",
+    userId: "mia",
+    distanceKm: 50,
+    activityType: "run",
+    activitySource: "suunto",
+    activityEndTime: "2026-05-29T10:00:00.000Z",
+    syncedAt: now.toISOString()
+  });
+  const completedGoal = completedRepository.getGoalById("goal_active_mia_crew");
+  assert.equal(completedGoal?.status, "completed", "completed goal status");
+  assert.ok(completedGoal?.resultLockedAt, "completed goal result lock");
+  const completedResult = completedRepository.getGoalResult("goal_active_mia_crew");
+  assert.equal(completedResult?.screen, "goal_result", "completed result screen");
+  assert.equal(completedResult?.status, "completed", "completed result status");
+  completedDb.sqlite.close();
+
+  const expiredDbDir = mkdtempSync(join(tmpdir(), "crew-goals-expire-"));
+  const expiredDb = createDatabase(join(expiredDbDir, "crew-goals.sqlite"));
+  seedCrewGoalsReadData(expiredDb.sqlite, now);
+  const expiredRepository = new SqliteCrewGoalsReadRepository(expiredDb.sqlite, {
+    now: new Date("2030-01-01T00:00:00.000Z"),
+    viewerId: "mia"
+  });
+  expiredRepository.expireActiveGoal("goal_active_mia_crew");
+  const expiredGoal = expiredRepository.getGoalById("goal_active_mia_crew");
+  assert.equal(expiredGoal?.status, "expired", "expired goal status");
+  assert.ok(expiredGoal?.resultLockedAt, "expired goal result lock");
+  const expiredResult = expiredRepository.getGoalResult("goal_active_mia_crew");
+  assert.equal(expiredResult?.screen, "goal_result", "expired result screen");
+  assert.equal(expiredResult?.status, "expired", "expired result status");
+  expiredDb.sqlite.close();
+
+  const goalResultDbDir = mkdtempSync(join(tmpdir(), "crew-goals-result-"));
+  const goalResultDb = createDatabase(join(goalResultDbDir, "crew-goals.sqlite"));
+  seedCrewGoalsReadData(goalResultDb.sqlite, now);
+  const goalResultRepository = new SqliteCrewGoalsReadRepository(goalResultDb.sqlite, {
+    now,
+    viewerId: "mia"
+  });
+  goalResultRepository.syncContribution({
+    activityId: "act_sync_004",
+    userId: "mia",
+    distanceKm: 50,
+    activityType: "run",
+    activitySource: "suunto",
+    activityEndTime: "2026-05-29T10:00:00.000Z",
+    syncedAt: now.toISOString()
+  });
+  const goalResultApp = createServer({
+    now: () => now,
+    database: goalResultDb,
+    seedDemoData: false
+  });
+  const goalResultResponse = await goalResultApp.inject({
+    method: "GET",
+    url: "/api/goals/goal_active_mia_crew/result"
+  });
+  assert.equal(goalResultResponse.statusCode, 200, "goal result route status");
+  assert.equal(goalResultResponse.json().screen, "goal_result", "goal result route screen");
+  await goalResultApp.close();
+  goalResultDb.sqlite.close();
+
   let clock = new Date("2026-05-29T12:00:00.000Z");
   const timeAwareApp = createServer({
     now: () => clock

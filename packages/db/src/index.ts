@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS goal_invites (
 
 CREATE TABLE IF NOT EXISTS goal_contributions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  goal_id TEXT NOT NULL,
+  goal_id TEXT,
   activity_id TEXT NOT NULL UNIQUE,
   user_id TEXT NOT NULL,
   distance REAL NOT NULL,

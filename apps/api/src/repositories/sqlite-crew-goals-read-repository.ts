@@ -1,9 +1,12 @@
 import type Database from "better-sqlite3";
 
 import type {
+  ContributionIgnoredReason,
+  GoalResultResponse,
   GoalRecommendationTier,
   GoalStatus,
   InviteStatus,
+  PostRunContributionResponse,
   RecommendationSource
 } from "../../../../packages/shared/src/index.js";
 import {
@@ -23,7 +26,10 @@ import type {
   CrewInviteRecord,
   CrewPendingInviteRecord,
   CrewUserProfile,
-  IgnoreInviteResult
+  IgnoreInviteResult,
+  IgnoredContributionInput,
+  SyncContributionInput,
+  SyncContributionResult
 } from "./crew-goals-read-repository.js";
 
 const CREW_LIMIT = 4;
@@ -51,6 +57,10 @@ interface GoalRow {
   status: string;
   recommendation_tier: string;
   recommendation_source: string;
+  completed_at: string | null;
+  expired_at: string | null;
+  result_locked_at: string | null;
+  final_distance: number | null;
 }
 
 interface GoalMemberRow {
@@ -71,12 +81,18 @@ interface GoalInviteRow {
 }
 
 interface GoalContributionRow {
+  id: number;
+  goal_id: string;
   activity_id: string;
   user_id: string;
   distance: number;
   activity_type: string;
+  activity_source: string;
   activity_end_time: string;
   synced_at: string;
+  counted_at: string;
+  status: string;
+  ignored_reason: string | null;
 }
 
 export function seedCrewGoalsReadData(sqlite: Database.Database, now = new Date()) {
@@ -301,7 +317,21 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
       )
       .get(this.viewerId) as GoalRow | undefined;
 
-    return row ? this.buildGoal(row) : null;
+    if (!row) {
+      return null;
+    }
+
+    this.maybeExpireGoal(row);
+
+    const refreshedRow = this.sqlite
+      .prepare("SELECT * FROM goals WHERE id = ?")
+      .get(row.id) as GoalRow | undefined;
+
+    if (!refreshedRow || refreshedRow.status !== "active") {
+      return null;
+    }
+
+    return this.buildGoal(refreshedRow);
   }
 
   getGoalById(goalId: string): CrewGoalRecord | null {
@@ -309,7 +339,110 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
       .prepare("SELECT * FROM goals WHERE id = ?")
       .get(goalId) as GoalRow | undefined;
 
-    return row ? this.buildGoal(row) : null;
+    if (!row) {
+      return null;
+    }
+
+    this.maybeExpireGoal(row);
+
+    const refreshedRow = this.sqlite
+      .prepare("SELECT * FROM goals WHERE id = ?")
+      .get(goalId) as GoalRow | undefined;
+
+    return refreshedRow ? this.buildGoal(refreshedRow) : null;
+  }
+
+  getGoalResult(goalId: string): GoalResultResponse | null {
+    const goal = this.getGoalById(goalId);
+
+    if (!goal || goal.status === "active" || !goal.resultLockedAt) {
+      return null;
+    }
+
+    const totalDistanceKm = roundDistance(
+      goal.members.reduce((sum, member) => sum + member.contributionKm, 0)
+    );
+    const finalDistanceKm = goal.finalDistanceKm ?? totalDistanceKm;
+
+    return {
+      screen: "goal_result",
+      goalId: goal.id,
+      status: goal.status,
+      title: goal.title,
+      totalDistanceKm,
+      targetDistanceKm: goal.targetDistanceKm,
+      finalDistanceKm,
+      daysUsedLabel: buildDaysUsedLabel(goal.startTime, goal.resultLockedAt),
+      resultLockedAt: goal.resultLockedAt,
+      members: goal.members.map((member) => {
+        const user = this.getUserById(member.userId);
+
+        return {
+          id: user.id,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          contributionKm: member.contributionKm
+        };
+      }),
+      primaryAction:
+        goal.status === "completed"
+          ? {
+              label: "Share Result",
+              href: `/goals/${goal.id}/share-result`,
+              kind: "primary"
+            }
+          : {
+              label: "Start Another Goal",
+              href: "/goals/create",
+              kind: "primary"
+            },
+      secondaryAction:
+        goal.status === "completed"
+          ? {
+              label: "Start Another Goal",
+              href: "/goals/create",
+              kind: "secondary"
+            }
+          : undefined
+    };
+  }
+
+  getPostRunContribution(activityId: string): PostRunContributionResponse | null {
+    const contribution = this.getGoalContributionByActivityId(activityId);
+
+    if (!contribution) {
+      return {
+        screen: "post_run",
+        activityId,
+        state: "updating",
+        message: "Updating crew progress"
+      };
+    }
+
+    const goal = contribution.goal_id ? this.getGoalById(contribution.goal_id) : null;
+    const state =
+      contribution.status === "counted"
+        ? "counted"
+        : contribution.ignored_reason === "duplicate"
+          ? "already_counted"
+          : contribution.ignored_reason === "goal_locked"
+            ? "goal_locked"
+            : "not_counted";
+
+    return {
+      screen: "post_run",
+      activityId,
+      state,
+      message:
+        state === "counted"
+          ? "Contribution counted"
+          : state === "already_counted"
+            ? "Already counted"
+            : state === "goal_locked"
+              ? "Goal result is locked"
+              : "Phase 1 only counts Run and Trail Run activities from trusted sources.",
+      goal: goal ? this.buildGoalSnapshot(goal) : undefined
+    };
   }
 
   listInvites(): CrewInviteRecord[] {
@@ -534,6 +667,8 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
       crewLimit: CREW_LIMIT,
       startTime: row.start_time,
       endTime: row.end_time,
+      resultLockedAt: row.result_locked_at ?? undefined,
+      finalDistanceKm: row.final_distance ?? undefined,
       recommendationTier: row.recommendation_tier as GoalRecommendationTier,
       recommendationSource: row.recommendation_source as RecommendationSource,
       members: this.listMembers(row.id),
@@ -599,6 +734,247 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
     }));
   }
 
+  syncContribution(input: SyncContributionInput): SyncContributionResult {
+    const goal = this.getActiveGoal();
+    const now = input.syncedAt;
+
+    if (!goal) {
+      return this.ignoreContribution({
+        ...input,
+        ignoredReason: "no_active_goal"
+      });
+    }
+
+    const existing = this.sqlite
+      .prepare(
+        `SELECT *
+         FROM goal_contributions
+         WHERE activity_id = ?`
+      )
+      .get(input.activityId) as GoalContributionRow | undefined;
+
+    if (existing) {
+      return {
+        activityId: input.activityId,
+        status: "ignored",
+        reasonCode: existing.status === "counted" ? "duplicate" : (existing.ignored_reason as ContributionIgnoredReason),
+        goalId: existing.goal_id ?? undefined
+      };
+    }
+
+    const member = goal.members.find((item) => item.userId === input.userId);
+
+    if (!member) {
+      return this.ignoreContribution({
+        ...input,
+        ignoredReason: "before_join",
+        goalId: goal.id
+      });
+    }
+
+    const ignoredReason = resolveContributionIgnoredReason(goal, member.joinTime, input);
+
+    if (ignoredReason) {
+      return this.ignoreContribution({
+        ...input,
+        ignoredReason,
+        goalId: goal.id
+      });
+    }
+
+    const sync = this.sqlite.transaction(() => {
+      this.sqlite
+        .prepare(
+          `INSERT INTO goal_contributions (
+            goal_id,
+            activity_id,
+            user_id,
+            distance,
+            activity_type,
+            activity_source,
+            activity_end_time,
+            synced_at,
+            counted_at,
+            status,
+            ignored_reason
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`
+        )
+        .run(
+          goal.id,
+          input.activityId,
+          input.userId,
+          input.distanceKm,
+          input.activityType,
+          input.activitySource,
+          input.activityEndTime,
+          now,
+          now,
+          "counted"
+        );
+
+      this.sqlite
+        .prepare(
+          `UPDATE goal_members
+           SET contribution_distance = contribution_distance + ?
+           WHERE goal_id = ? AND user_id = ?`
+        )
+        .run(input.distanceKm, goal.id, input.userId);
+
+      const refreshedGoal = this.getGoalById(goal.id);
+
+      if (!refreshedGoal) {
+        throw new Error(`Goal ${goal.id} was not found`);
+      }
+
+      const totalDistanceKm = roundDistance(
+        refreshedGoal.members.reduce((sum, item) => sum + item.contributionKm, 0)
+      );
+
+      if (totalDistanceKm >= refreshedGoal.targetDistanceKm) {
+        lockGoalResult(this.sqlite, refreshedGoal.id, "completed", now, totalDistanceKm);
+      }
+
+      return {
+        activityId: input.activityId,
+        status: "counted" as const,
+        goalId: goal.id,
+        completedGoalId:
+          totalDistanceKm >= refreshedGoal.targetDistanceKm ? refreshedGoal.id : undefined,
+        resultLockedAt:
+          totalDistanceKm >= refreshedGoal.targetDistanceKm ? now : undefined
+      };
+    });
+
+    return sync();
+  }
+
+  ignoreContribution(input: IgnoredContributionInput): SyncContributionResult {
+    const existing = this.sqlite
+      .prepare(
+        `SELECT *
+         FROM goal_contributions
+         WHERE activity_id = ?`
+      )
+      .get(input.activityId) as GoalContributionRow | undefined;
+
+    if (existing) {
+      return {
+        activityId: input.activityId,
+        status: "ignored",
+        reasonCode: existing.status === "counted" ? "duplicate" : (existing.ignored_reason as ContributionIgnoredReason),
+        goalId: existing.goal_id ?? undefined
+      };
+    }
+
+    this.sqlite
+      .prepare(
+        `INSERT INTO goal_contributions (
+          goal_id,
+          activity_id,
+          user_id,
+          distance,
+          activity_type,
+          activity_source,
+          activity_end_time,
+          synced_at,
+          counted_at,
+          status,
+          ignored_reason
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        input.goalId ?? null,
+        input.activityId,
+        input.userId,
+        input.distanceKm,
+        input.activityType,
+        input.activitySource,
+        input.activityEndTime,
+        input.syncedAt,
+        input.syncedAt,
+        "ignored",
+        input.ignoredReason
+      );
+
+    return {
+      activityId: input.activityId,
+      status: "ignored",
+      reasonCode: input.ignoredReason,
+      goalId: input.goalId
+    };
+  }
+
+  expireActiveGoal(goalId: string): SyncContributionResult {
+    const goal = this.getGoalById(goalId);
+
+    if (!goal) {
+      throw new Error(`Goal ${goalId} was not found`);
+    }
+
+    if (goal.status !== "active" || goal.resultLockedAt) {
+      return {
+        activityId: goalId,
+        status: "ignored",
+        reasonCode: "goal_locked",
+        goalId: goal.id
+      };
+    }
+
+    const expiredAt = goal.endTime;
+    const finalDistanceKm = roundDistance(goal.members.reduce((sum, item) => sum + item.contributionKm, 0));
+
+    lockGoalResult(this.sqlite, goal.id, "expired", expiredAt, finalDistanceKm);
+
+    return {
+      activityId: goal.id,
+      status: "ignored",
+      reasonCode: "goal_locked",
+      goalId: goal.id,
+      resultLockedAt: expiredAt
+    };
+  }
+
+  private getGoalContributionByActivityId(activityId: string): GoalContributionRow | undefined {
+    return this.sqlite
+      .prepare(`SELECT * FROM goal_contributions WHERE activity_id = ?`)
+      .get(activityId) as GoalContributionRow | undefined;
+  }
+
+  private buildGoalSnapshot(goal: CrewGoalRecord) {
+    const totalDistanceKm = roundDistance(
+      goal.members.reduce((sum, member) => sum + member.contributionKm, 0)
+    );
+
+    return {
+      goalId: goal.id,
+      title: goal.title,
+      status: goal.status,
+      totalDistanceKm,
+      targetDistanceKm: goal.targetDistanceKm,
+      remainingDistanceKm: Math.max(0, roundDistance(goal.targetDistanceKm - totalDistanceKm)),
+      resultLockedAt: goal.resultLockedAt
+    };
+  }
+
+  private maybeExpireGoal(goalRow: GoalRow) {
+    if (goalRow.status !== "active") {
+      return;
+    }
+
+    const now = this.getNow();
+
+    if (new Date(goalRow.end_time).getTime() > now.getTime()) {
+      return;
+    }
+
+    const goal = this.buildGoal(goalRow);
+    const finalDistanceKm = roundDistance(
+      goal.members.reduce((sum, member) => sum + member.contributionKm, 0)
+    );
+
+    lockGoalResult(this.sqlite, goal.id, "expired", goal.endTime, finalDistanceKm);
+  }
+
   private toInviteRecord(row: GoalInviteRow): CrewInviteRecord {
     return {
       id: row.id,
@@ -614,6 +990,83 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
 
 function buildInviteId(goalId: string, inviteeId: string): string {
   return `invite_${goalId}_${inviteeId}`;
+}
+
+function resolveContributionIgnoredReason(
+  goal: CrewGoalRecord,
+  joinTime: string,
+  input: SyncContributionInput
+): ContributionIgnoredReason | null {
+  const activityEndTime = new Date(input.activityEndTime);
+
+  if (goal.resultLockedAt || goal.status !== "active") {
+    return "goal_locked";
+  }
+
+  if (input.activityType !== "run" && input.activityType !== "trail_run") {
+    return "activity_type";
+  }
+
+  if (input.activitySource !== "suunto") {
+    return "source";
+  }
+
+  if (activityEndTime.getTime() < new Date(joinTime).getTime()) {
+    return "before_join";
+  }
+
+  if (
+    activityEndTime.getTime() < new Date(goal.startTime).getTime() ||
+    activityEndTime.getTime() > new Date(goal.endTime).getTime()
+  ) {
+    return "outside_window";
+  }
+
+  return null;
+}
+
+function lockGoalResult(
+  sqlite: Database.Database,
+  goalId: string,
+  status: "completed" | "expired",
+  lockedAt: string,
+  finalDistanceKm: number
+) {
+  const timestampColumn = status === "completed" ? "completed_at" : "expired_at";
+
+  sqlite
+    .prepare(
+      `UPDATE goals
+       SET status = ?,
+           ${timestampColumn} = ?,
+           result_locked_at = ?,
+           final_distance = ?
+       WHERE id = ? AND result_locked_at IS NULL`
+    )
+    .run(status, lockedAt, lockedAt, finalDistanceKm, goalId);
+
+  sqlite
+    .prepare(
+      `UPDATE goal_invites
+       SET status = 'invalid',
+           invalid_reason = ?
+       WHERE goal_id = ? AND status = 'pending'`
+    )
+    .run(status, goalId);
+}
+
+function roundDistance(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function buildDaysUsedLabel(startTime: string, lockedAt: string): string {
+  const elapsedMs = Math.max(
+    0,
+    new Date(lockedAt).getTime() - new Date(startTime).getTime()
+  );
+  const elapsedDays = Math.max(1, Math.ceil(elapsedMs / (24 * 60 * 60 * 1000)));
+
+  return `${elapsedDays} day${elapsedDays === 1 ? "" : "s"}`;
 }
 
 function isSqliteUniqueConstraintError(error: unknown): boolean {

@@ -1,4 +1,8 @@
 import type {
+  ContributionIgnoredReason,
+  ContributionStatus,
+  GoalResultResponse,
+  PostRunContributionResponse,
   GoalRecommendationTier,
   GoalStatus,
   InviteStatus,
@@ -43,6 +47,8 @@ export interface CrewGoalRecord {
   crewLimit: number;
   startTime: string;
   endTime: string;
+  resultLockedAt?: string;
+  finalDistanceKm?: number;
   recommendationTier: GoalRecommendationTier;
   recommendationSource: RecommendationSource;
   members: CrewGoalMemberRecord[];
@@ -87,10 +93,43 @@ export interface IgnoreInviteResult {
   inviteId: string;
 }
 
+export interface SyncContributionInput {
+  activityId: string;
+  userId: string;
+  distanceKm: number;
+  activityType: string;
+  activitySource: string;
+  activityEndTime: string;
+  syncedAt: string;
+}
+
+export interface IgnoredContributionInput {
+  activityId: string;
+  userId: string;
+  distanceKm: number;
+  activityType: string;
+  activitySource: string;
+  activityEndTime: string;
+  syncedAt: string;
+  ignoredReason: ContributionIgnoredReason;
+  goalId?: string;
+}
+
+export interface SyncContributionResult {
+  activityId: string;
+  status: ContributionStatus;
+  reasonCode?: ContributionIgnoredReason;
+  goalId?: string;
+  completedGoalId?: string;
+  resultLockedAt?: string;
+}
+
 export interface CrewGoalsReadRepository {
   getViewer(): CrewUserProfile;
   getActiveGoal(): CrewGoalRecord | null;
   getGoalById(goalId: string): CrewGoalRecord | null;
+  getGoalResult(goalId: string): GoalResultResponse | null;
+  getPostRunContribution(activityId: string): PostRunContributionResponse | null;
   listInvites(): CrewInviteRecord[];
   getInviteById(inviteId: string): CrewInviteRecord | null;
   getViewerInviteByGoalId(goalId: string): CrewInviteRecord | null;
@@ -102,4 +141,7 @@ export interface CrewGoalsWriteRepository extends CrewGoalsReadRepository {
   createGoal(input: CreateGoalInput): CreateGoalResult;
   acceptInvite(inviteId: string): AcceptInviteResult;
   ignoreInvite(inviteId: string): IgnoreInviteResult;
+  syncContribution(input: SyncContributionInput): SyncContributionResult;
+  ignoreContribution(input: IgnoredContributionInput): SyncContributionResult;
+  expireActiveGoal(goalId: string): SyncContributionResult;
 }

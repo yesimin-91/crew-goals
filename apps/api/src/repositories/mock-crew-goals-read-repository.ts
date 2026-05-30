@@ -1,4 +1,8 @@
 import type {
+  GoalResultResponse,
+  PostRunContributionResponse
+} from "../../../../packages/shared/src/index.js";
+import type {
   MockCrewGoalsDataset,
   MockGoal,
   MockInvite,
@@ -49,6 +53,70 @@ export class MockCrewGoalsReadRepository implements CrewGoalsReadRepository {
 
   getGoalById(goalId: string): MockGoal | null {
     return this.dataset.goals[goalId] ?? null;
+  }
+
+  getGoalResult(goalId: string): GoalResultResponse | null {
+    const goal = this.getGoalById(goalId);
+
+    if (!goal || goal.status === "active") {
+      return null;
+    }
+
+    const totalDistanceKm = goal.members.reduce((sum, member) => sum + member.contributionKm, 0);
+
+    return {
+      screen: "goal_result",
+      goalId: goal.id,
+      status: goal.status,
+      title: goal.title,
+      totalDistanceKm,
+      targetDistanceKm: goal.targetDistanceKm,
+      finalDistanceKm: totalDistanceKm,
+      daysUsedLabel: "7 days",
+      resultLockedAt: goal.endTime,
+      members: goal.members.map((member) => {
+        const user = this.getUserById(member.userId);
+
+        return {
+          id: user.id,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          contributionKm: member.contributionKm
+        };
+      }),
+      primaryAction: {
+        label: "Start Another Goal",
+        href: "/goals/create",
+        kind: "primary"
+      }
+    };
+  }
+
+  getPostRunContribution(activityId: string): PostRunContributionResponse | null {
+    const goal = Object.values(this.dataset.goals).find((item) =>
+      item.recentActivity.some((activity) => activity.activityId === activityId)
+    );
+
+    if (!goal) {
+      return null;
+    }
+
+    const totalDistanceKm = goal.members.reduce((sum, member) => sum + member.contributionKm, 0);
+
+    return {
+      screen: "post_run",
+      activityId,
+      state: "counted",
+      message: "Contribution counted",
+      goal: {
+        goalId: goal.id,
+        title: goal.title,
+        status: goal.status,
+        totalDistanceKm,
+        targetDistanceKm: goal.targetDistanceKm,
+        remainingDistanceKm: Math.max(0, goal.targetDistanceKm - totalDistanceKm)
+      }
+    };
   }
 
   listInvites(): MockInvite[] {

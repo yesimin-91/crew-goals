@@ -13,6 +13,23 @@ export type InviteInvalidReason =
   | "ignored"
   | "active_goal_conflict";
 
+export type ContributionStatus = "counted" | "ignored";
+
+export type ContributionIgnoredReason =
+  | "activity_type"
+  | "source"
+  | "before_join"
+  | "outside_window"
+  | "duplicate"
+  | "goal_locked"
+  | "no_active_goal";
+
+export type ContributionSyncOutcome =
+  | "counted"
+  | "already_counted"
+  | "not_counted"
+  | "goal_completed";
+
 export type GoalTrackState = "on_track" | "behind" | "completed" | "expired";
 
 export type InviteAvailability = "joinable" | "blocked" | "unavailable";
@@ -281,6 +298,65 @@ export interface AcceptInviteResponse {
 export interface IgnoreInviteResponse {
   screen: "invite_ignored";
   inviteId: string;
+}
+
+export interface ContributionSyncRequest {
+  activityId: string;
+  distanceKm: number;
+  activityType: string;
+  activitySource: string;
+  activityEndTime: string;
+}
+
+export interface ContributionGoalSnapshot {
+  goalId: string;
+  title: string;
+  status: GoalStatus;
+  totalDistanceKm: number;
+  targetDistanceKm: number;
+  remainingDistanceKm: number;
+  resultLockedAt?: string;
+}
+
+export interface ContributionSyncResponse {
+  screen: "contribution_sync";
+  activityId: string;
+  outcome: ContributionSyncOutcome;
+  status: ContributionStatus;
+  reasonCode?: ContributionIgnoredReason;
+  distanceKm: number;
+  message: string;
+  goal?: ContributionGoalSnapshot;
+}
+
+export interface GoalResultMember {
+  id: string;
+  displayName: string;
+  avatarUrl: string;
+  contributionKm: number;
+}
+
+export interface GoalResultResponse {
+  screen: "goal_result";
+  goalId: string;
+  status: "completed" | "expired";
+  title: string;
+  totalDistanceKm: number;
+  targetDistanceKm: number;
+  finalDistanceKm: number;
+  daysUsedLabel: string;
+  resultLockedAt: string;
+  members: GoalResultMember[];
+  primaryAction: ScreenAction;
+  secondaryAction?: ScreenAction;
+}
+
+export interface PostRunContributionResponse {
+  screen: "post_run";
+  activityId: string;
+  state: "updating" | "counted" | "already_counted" | "not_counted" | "goal_locked";
+  message: string;
+  goal?: ContributionGoalSnapshot;
 }
 
 // Temporary web migration models. These are compatibility shapes for the current

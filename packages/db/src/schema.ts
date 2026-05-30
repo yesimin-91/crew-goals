@@ -52,7 +52,7 @@ export const goalInvites = sqliteTable("goal_invites", {
 
 export const goalContributions = sqliteTable("goal_contributions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  goalId: text("goal_id").notNull(),
+  goalId: text("goal_id"),
   activityId: text("activity_id").notNull().unique(),
   userId: text("user_id").notNull(),
   distance: real("distance").notNull(),
