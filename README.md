@@ -1,11 +1,13 @@
 # Crew Goals
 
-Crew Goals 是一个 7 天游程式 Team Goal MVP monorepo，用来演示创建目标、邀请好友、自动累计贡献、结果锁定和重开下一轮的完整闭环。
+Crew Goals 是一个面向 Suunto App 的异步团队训练目标 MVP monorepo，用来验证 2-4 位熟人好友是否愿意一起发起一个固定 7 天的 Distance Goal，并在不需要同时开跑的前提下，通过 Run / Trail Run 的同步结果自动累计团队进度。
+
+这个 MVP 重点验证的是完整闭环：创建目标、邀请 1-3 位好友、接受或忽略邀请、查看团队进度与个人贡献、在运动后感知“这次跑步帮团队前进了多少”，以及在 Completed / Expired 之后愿意再次发起下一轮。
 
 ## What it does
 
 - Home 和 Goals Hub 提供项目入口与当前目标摘要。
-- Create Goal 支持选择 1 到 3 位好友、查看推荐距离、发送邀请。
+- Create Goal 支持创建固定 7 天 Distance Goal、选择 1 到 3 位好友、查看推荐距离并发送邀请。
 - Invite Detail 支持 Join Goal 和 Not now。
 - Post-run 页面解释活动是否计入，以及为什么计入或未计入。
 - Result 页面分别处理 Completed 和 Expired，并支持 Start Another Goal。
