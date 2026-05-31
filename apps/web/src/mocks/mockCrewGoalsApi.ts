@@ -10,6 +10,9 @@ import {
   mapInvitesListResponse
 } from "../services/apiContracts";
 import type {
+  CreateGoalResponse,
+  GoalDistanceRecommendationResponse,
+  GoalRecommendationTier,
   GoalDetailResponse,
   GoalsHubResponse,
   HomeEntryResponse,
@@ -17,6 +20,12 @@ import type {
   InvitesListResponse,
   GoalReadResponse
 } from "../../../../packages/shared/src/index";
+
+const mockRecommendationDistances: Record<GoalRecommendationTier, number> = {
+  easy: 42,
+  recommended: 56,
+  stretch: 67.2
+};
 
 const homeEntryResponse: HomeEntryResponse = {
   screen: "home_entry",
@@ -267,6 +276,51 @@ export function createMockCrewGoalsApi(): CrewGoalsApi {
       }
 
       return mapInviteDetailResponse(inviteDetailResponse);
+    },
+    async getGoalDistanceRecommendation(selectedFriendIds, signal) {
+      await waitFor(signal);
+
+      return {
+        screen: "goal_recommendation",
+        durationDays: 7,
+        selectedFriendIds,
+        options: [
+          {
+            tier: "easy",
+            label: "Easy",
+            distanceKm: mockRecommendationDistances.easy,
+            description: "A lighter week for building the habit together."
+          },
+          {
+            tier: "recommended",
+            label: "Recommended",
+            distanceKm: mockRecommendationDistances.recommended,
+            description: "Matches the crew's current weekly rhythm."
+          },
+          {
+            tier: "stretch",
+            label: "Stretch",
+            distanceKm: mockRecommendationDistances.stretch,
+            description: "A bigger push if the whole crew is feeling good."
+          }
+        ],
+        defaultSelectedTier: "recommended",
+        source: selectedFriendIds.length > 1 ? "recent_training" : "default",
+        explanation:
+          selectedFriendIds.length > 1
+            ? "Based on the selected crew's recent weekly Run and Trail Run distance."
+            : "Using the default weekly distance presets because recent training data is limited."
+      } satisfies GoalDistanceRecommendationResponse;
+    },
+    async createGoal() {
+      await waitFor();
+
+      return {
+        screen: "goal_created",
+        goalId: goalDetailResponse.goalId,
+        detailHref: `/goals/${goalDetailResponse.goalId}`,
+        inviteIds: ["invite-jules"]
+      } satisfies CreateGoalResponse;
     }
   };
 }

@@ -1,5 +1,8 @@
 export type {
+  CreateGoalResponse,
   EntryOverview,
+  GoalDistanceRecommendationResponse,
+  GoalRecommendationTier,
   GoalStatus,
   InviteStatus,
   WebCompatGoalDetail as GoalDetail,

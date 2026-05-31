@@ -1,6 +1,9 @@
 export const appRoutes = {
   home: "/",
   goals: "/goals",
+  createGoal: "/goals/create",
+  chooseGoalFriends: "/goals/friends",
+  previewGoal: "/goals/preview",
   invites: "/invites"
 } as const;
 

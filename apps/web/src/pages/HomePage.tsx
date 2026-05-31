@@ -136,8 +136,8 @@ function NoActiveGoalHome({ view }: { view: HomeEntryView }) {
           <ActionLink block to={appRoutes.goals}>
             Open goals hub
           </ActionLink>
-          <ActionLink block tone="secondary" to={appRoutes.invites}>
-            Check invites
+          <ActionLink block tone="secondary" to={appRoutes.createGoal}>
+            Start a goal
           </ActionLink>
         </div>
       </section>

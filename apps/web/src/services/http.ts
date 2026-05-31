@@ -13,12 +13,16 @@ interface JsonRequestOptions extends RequestInit {
 }
 
 export async function fetchJson<T>(input: string, init?: JsonRequestOptions): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set("Accept", "application/json");
+
+  if (init?.body) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const response = await fetch(input, {
-    headers: {
-      Accept: "application/json",
-      ...(init?.headers ?? {})
-    },
-    ...init
+    ...init,
+    headers
   });
 
   if (!response.ok) {

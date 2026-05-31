@@ -50,32 +50,36 @@ export function InvitesPage() {
       {state.data.length ? (
         <div className="stack-list">
           {state.data.map((invite) => (
-            <section className="panel panel--compact" key={invite.id}>
-              <div className="panel__top">
-                <div>
-                  <p className="eyebrow">Invited by {invite.inviterName}</p>
-                  <h2>{invite.title}</h2>
+            <section className="panel panel--compact invite-card" key={invite.id}>
+              <div className="invite-card__summary">
+                <div className="panel__top">
+                  <div>
+                    <p className="eyebrow">Invited by {invite.inviterName}</p>
+                    <h2>{invite.title}</h2>
+                  </div>
+                  <span className={`pill pill--${invite.statusTone}`}>{invite.statusLabel}</span>
                 </div>
-                <span className={`pill pill--${invite.statusTone}`}>{invite.statusLabel}</span>
+
+                <div className="metric-grid">
+                  <article className="metric-card">
+                    <span>Target</span>
+                    <strong>{invite.targetLabel}</strong>
+                  </article>
+                  <article className="metric-card">
+                    <span>Duration</span>
+                    <strong>{invite.durationLabel}</strong>
+                  </article>
+                  <article className="metric-card">
+                    <span>Members</span>
+                    <strong>{invite.membersLabel}</strong>
+                  </article>
+                </div>
               </div>
 
-              <div className="metric-grid">
-                <article className="metric-card">
-                  <span>Target</span>
-                  <strong>{invite.targetLabel}</strong>
-                </article>
-                <article className="metric-card">
-                  <span>Duration</span>
-                  <strong>{invite.durationLabel}</strong>
-                </article>
-                <article className="metric-card">
-                  <span>Members</span>
-                  <strong>{invite.membersLabel}</strong>
-                </article>
+              <div className="invite-card__details">
+                <p className="support-copy">{invite.description}</p>
+                <p className="meta-copy">{invite.expiresLabel}</p>
               </div>
-
-              <p className="support-copy">{invite.description}</p>
-              <p className="meta-copy">{invite.expiresLabel}</p>
 
               <div className="inline-actions">
                 <ActionLink block to={buildInvitePath(invite.id)}>

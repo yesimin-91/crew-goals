@@ -142,8 +142,38 @@ button {
     var(--surface);
 }
 
+.goals-summary-card {
+  display: grid;
+  gap: 18px;
+}
+
+.goals-summary-card__progress {
+  display: grid;
+  gap: 12px;
+}
+
+.goals-summary-card__meter {
+  display: grid;
+  gap: 10px;
+}
+
 .panel--compact {
   padding: 16px;
+}
+
+.invite-card {
+  display: grid;
+  gap: 16px;
+}
+
+.invite-card__summary {
+  display: grid;
+  gap: 14px;
+}
+
+.invite-card__details {
+  display: grid;
+  gap: 8px;
 }
 
 .panel__top,
@@ -292,15 +322,156 @@ button {
 
 .support-copy {
   font-size: 0.95rem;
+  line-height: 1.48;
 }
 
 .meta-copy {
-  margin-top: 8px;
+  line-height: 1.2;
 }
 
 .inline-actions {
   display: grid;
   gap: 10px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(145, 176, 201, 0.16);
+  border-radius: 18px;
+  padding: 0 14px;
+  background: rgba(5, 11, 18, 0.42);
+  color: var(--text);
+  outline: 0;
+}
+
+.field input:focus {
+  border-color: rgba(117, 226, 255, 0.58);
+}
+
+.select-card,
+.tier-card {
+  width: 100%;
+  border: 1px solid rgba(145, 176, 201, 0.12);
+  background: var(--surface-muted);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.select-card:hover,
+.tier-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(117, 226, 255, 0.32);
+}
+
+.select-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+  transform: none;
+}
+
+.select-card {
+  min-height: 74px;
+  border-radius: 22px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  text-align: left;
+}
+
+.select-card--selected,
+.tier-card--selected {
+  border-color: rgba(124, 232, 177, 0.5);
+  background:
+    linear-gradient(140deg, rgba(124, 232, 177, 0.12), transparent 42%),
+    var(--surface-muted);
+}
+
+.select-card strong,
+.tier-card strong {
+  display: block;
+}
+
+.select-card small,
+.tier-card small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+}
+
+.select-card__status {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.avatar-stack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.avatar-stack .avatar:not(:first-child) {
+  margin-left: -18px;
+}
+
+.avatar-stack p {
+  margin: 0 0 0 6px;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.tier-grid {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tier-card {
+  border-radius: 22px;
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  text-align: left;
+}
+
+.tier-card span,
+.form-error {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tier-card strong {
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+
+.tier-card p {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+}
+
+.form-error {
+  color: var(--warning);
+  margin: 12px 0 0;
 }
 
 .action {

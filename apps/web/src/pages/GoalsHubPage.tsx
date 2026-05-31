@@ -45,14 +45,18 @@ export function GoalsHubPage() {
       />
 
       {state.data ? (
-        <section className="panel panel--accent">
-          <div className="section-heading">
-            <p className="eyebrow">Active now</p>
-            <h2>{state.data.title}</h2>
-          </div>
+        <section className="panel panel--accent goals-summary-card">
+          <div className="goals-summary-card__progress">
+            <div className="section-heading">
+              <p className="eyebrow">Active now</p>
+              <h2>{state.data.title}</h2>
+            </div>
 
-          <p className="support-copy">{state.data.progressLabel}</p>
-          <ProgressBar value={state.data.progressPercent} />
+            <div className="goals-summary-card__meter">
+              <p className="support-copy">{state.data.progressLabel}</p>
+              <ProgressBar value={state.data.progressPercent} />
+            </div>
+          </div>
 
           <div className="metric-grid">
             <article className="metric-card">
@@ -94,9 +98,9 @@ export function GoalsHubPage() {
         <EmptyState
           eyebrow="No active goal"
           title="Nothing is in motion yet"
-          body="The goals hub is ready for the next phase’s create flow, but for now it clearly shows that there is no live weekly goal."
-          primaryLabel="Back to home"
-          primaryTo={appRoutes.home}
+          body="Create a 7-day distance goal, invite 1 to 3 friends, and let future eligible runs move the team forward."
+          primaryLabel="Start a goal"
+          primaryTo={appRoutes.createGoal}
         />
       )}
     </div>
