@@ -73,17 +73,19 @@ export function PostRunPage() {
           <span className={`pill pill--${view.tone}`}>{view.label}</span>
         </div>
 
-        <div className="post-run-card__mark" aria-hidden="true">
-          {getStateMark(view.state)}
-        </div>
+        <div className="post-run-card__summary">
+          <div className="post-run-card__mark" aria-hidden="true">
+            {getStateMark(view.state)}
+          </div>
 
-        <div className="hero-card__body">
-          <h1>{view.title}</h1>
-          <p>{view.body}</p>
+          <div className="hero-card__body">
+            <h1>{view.title}</h1>
+            <p>{view.body}</p>
+          </div>
         </div>
 
         {view.syncedDistanceLabel ? (
-          <div className="metric-grid">
+          <div className="metric-grid post-run-card__metrics">
             <article className="metric-card">
               <span>This activity</span>
               <strong>{view.syncedDistanceLabel}</strong>
@@ -103,16 +105,20 @@ export function PostRunPage() {
       </section>
 
       {view.goal ? (
-        <section className="panel">
-          <div className="section-heading">
-            <p className="eyebrow">Crew goal</p>
-            <h2>{view.goal.title}</h2>
+        <section className="panel post-run-goal-card">
+          <div className="post-run-goal-card__intro">
+            <div className="section-heading">
+              <p className="eyebrow">Crew goal</p>
+              <h2>{view.goal.title}</h2>
+            </div>
+
+            <div className="post-run-goal-card__progress">
+              <p className="support-copy">{view.goal.progressLabel}</p>
+              <ProgressBar value={view.goal.progressPercent} />
+            </div>
           </div>
 
-          <p className="support-copy">{view.goal.progressLabel}</p>
-          <ProgressBar value={view.goal.progressPercent} />
-
-          <div className="metric-grid">
+          <div className="metric-grid post-run-goal-card__metrics">
             <article className="metric-card">
               <span>Progress</span>
               <strong>{view.goal.progressPercentLabel}</strong>

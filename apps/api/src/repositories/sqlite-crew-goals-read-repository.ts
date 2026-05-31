@@ -378,6 +378,7 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
     return {
       screen: "goal_result",
       goalId: goal.id,
+      currentUserId: this.getViewer().id,
       status: goal.status,
       title: goal.title,
       totalDistanceKm,

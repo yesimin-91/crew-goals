@@ -22,3 +22,18 @@ export function buildInviteUnavailablePath(inviteId: string) {
 export function buildPostRunPath(activityId: string) {
   return `/post-run/${activityId}`;
 }
+
+export function buildGoalResultPath(goalId: string, status: "completed" | "expired") {
+  return `/results/${goalId}/${status}`;
+}
+
+export function buildRestartGoalPath(memberIds: string[]) {
+  const params = new URLSearchParams();
+
+  if (memberIds.length) {
+    params.set("restartMemberIds", memberIds.join(","));
+  }
+
+  const query = params.toString();
+  return query ? `${appRoutes.createGoal}?${query}` : appRoutes.createGoal;
+}

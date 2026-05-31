@@ -418,6 +418,7 @@ export interface GoalResultMember {
 export interface GoalResultResponse {
   screen: "goal_result";
   goalId: string;
+  currentUserId: string;
   status: "completed" | "expired";
   title: string;
   totalDistanceKm: number;

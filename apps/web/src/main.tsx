@@ -6,6 +6,7 @@ import { App } from "./App";
 import { CrewGoalsApiProvider } from "./app/CrewGoalsApiContext";
 import { CreateGoalPage } from "./pages/CreateGoalPage";
 import { GoalDetailPage } from "./pages/GoalDetailPage";
+import { GoalResultPage } from "./pages/GoalResultPage";
 import { GoalsHubPage } from "./pages/GoalsHubPage";
 import { HomePage } from "./pages/HomePage";
 import { InviteDetailPage } from "./pages/InviteDetailPage";
@@ -34,6 +35,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               element={<InviteUnavailablePage />}
             />
             <Route path="post-run/:activityId" element={<PostRunPage />} />
+            <Route path="results/:goalId/:status" element={<GoalResultPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

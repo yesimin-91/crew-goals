@@ -4,6 +4,7 @@ export type {
   CreateGoalResponse,
   EntryOverview,
   GoalDistanceRecommendationResponse,
+  GoalResultResponse,
   GoalRecommendationTier,
   GoalStatus,
   InviteStatus,

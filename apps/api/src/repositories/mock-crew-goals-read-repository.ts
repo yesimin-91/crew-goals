@@ -68,6 +68,7 @@ export class MockCrewGoalsReadRepository implements CrewGoalsReadRepository {
     return {
       screen: "goal_result",
       goalId: goal.id,
+      currentUserId: this.dataset.viewerId,
       status: goal.status,
       title: goal.title,
       totalDistanceKm,

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { useCrewGoalsApi } from "../app/CrewGoalsApiContext";
 import { appRoutes, buildGoalPath } from "../app/routes";
@@ -134,6 +134,7 @@ function buildFallbackRecommendation(
 export function CreateGoalPage() {
   const api = useCrewGoalsApi();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [query, setQuery] = useState("");
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
   const [recommendation, setRecommendation] =
@@ -145,6 +146,16 @@ export function CreateGoalPage() {
   const [submitState, setSubmitState] =
     useState<"idle" | "submitting" | "error">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const hasAppliedRestartPrefill = useRef(false);
+  const restartMemberIds = useMemo(
+    () =>
+      searchParams
+        .get("restartMemberIds")
+        ?.split(",")
+        .map((id) => id.trim())
+        .filter(Boolean) ?? [],
+    [searchParams]
+  );
 
   const filteredFriends = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -186,6 +197,21 @@ export function CreateGoalPage() {
 
     return () => abortController.abort();
   }, [api, selectedFriendIds]);
+
+  useEffect(() => {
+    if (hasAppliedRestartPrefill.current || restartMemberIds.length === 0 || selectedFriendIds.length > 0) {
+      return;
+    }
+
+    const prefills = INVITEABLE_FRIENDS.filter((friend) => restartMemberIds.includes(friend.id))
+      .slice(0, 3)
+      .map((friend) => friend.id);
+
+    if (prefills.length) {
+      hasAppliedRestartPrefill.current = true;
+      setSelectedFriendIds(prefills);
+    }
+  }, [restartMemberIds, selectedFriendIds.length]);
 
   const selectedFriends = selectedFriendIds.map((friendId) =>
     INVITEABLE_FRIENDS.find((friend) => friend.id === friendId)
@@ -318,14 +344,21 @@ export function CreateGoalPage() {
         </div>
 
         {selectedFriends.length > 0 ? (
-          <div className="avatar-stack" aria-label="Selected crew">
-            {selectedFriends.map((friend) => (
-              <span className="avatar" key={friend.id}>
-                {getInitials(friend.displayName)}
-              </span>
-            ))}
-            <p>{selectedFriends.length + 1} people including you</p>
-          </div>
+          <>
+            <div className="avatar-stack" aria-label="Selected crew">
+              {selectedFriends.map((friend) => (
+                <span className="avatar" key={friend.id}>
+                  {getInitials(friend.displayName)}
+                </span>
+              ))}
+              <p>{selectedFriends.length + 1} people including you</p>
+            </div>
+            {restartMemberIds.length ? (
+              <p className="support-copy">
+                We preselected joined members from the last goal. You can adjust the crew before sending invites.
+              </p>
+            ) : null}
+          </>
         ) : (
           <p className="support-copy">
             Select at least one friend to calculate Easy, Recommended, and

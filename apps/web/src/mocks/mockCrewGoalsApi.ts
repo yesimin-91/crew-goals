@@ -373,6 +373,88 @@ const goalDetailResponses: Record<string, GoalReadResponse> = {
   }
 };
 
+const goalResultResponses = {
+  "goal-completed-weekly": {
+    screen: "goal_result",
+    goalId: "goal-completed-weekly",
+    currentUserId: "mia",
+    status: "completed",
+    title: "Mia + 2 Crew",
+    totalDistanceKm: 56,
+    targetDistanceKm: 56,
+    finalDistanceKm: 56,
+    daysUsedLabel: "7 days",
+    resultLockedAt: "2026-05-30T06:00:00.000Z",
+    members: [
+      {
+        id: "mia",
+        displayName: "Mia Chen",
+        avatarUrl: "/mock/avatars/mia.png",
+        contributionKm: 21.4
+      },
+      {
+        id: "nora",
+        displayName: "Nora Lee",
+        avatarUrl: "/mock/avatars/nora.png",
+        contributionKm: 18.4
+      },
+      {
+        id: "sam",
+        displayName: "Sam Rivera",
+        avatarUrl: "/mock/avatars/sam.png",
+        contributionKm: 16.2
+      }
+    ],
+    primaryAction: {
+      label: "Share Result",
+      href: "/goals/goal-completed-weekly/share-result",
+      kind: "primary"
+    },
+    secondaryAction: {
+      label: "Start Another Goal",
+      href: "/goals/create",
+      kind: "secondary"
+    }
+  },
+  "goal-expired-weekly": {
+    screen: "goal_result",
+    goalId: "goal-expired-weekly",
+    currentUserId: "mia",
+    status: "expired",
+    title: "Mia + 2 Crew",
+    totalDistanceKm: 41.5,
+    targetDistanceKm: 56,
+    finalDistanceKm: 41.5,
+    daysUsedLabel: "7 days",
+    resultLockedAt: "2026-05-30T06:00:00.000Z",
+    members: [
+      {
+        id: "mia",
+        displayName: "Mia Chen",
+        avatarUrl: "/mock/avatars/mia.png",
+        contributionKm: 17.2
+      },
+      {
+        id: "nora",
+        displayName: "Nora Lee",
+        avatarUrl: "/mock/avatars/nora.png",
+        contributionKm: 14.3
+      },
+      {
+        id: "sam",
+        displayName: "Sam Rivera",
+        avatarUrl: "/mock/avatars/sam.png",
+        contributionKm: 10
+      }
+    ],
+    primaryAction: {
+      label: "Start Another Goal",
+      href: "/goals/create",
+      kind: "primary"
+    }
+  }
+} satisfies Record<string, import("../../../../packages/shared/src/index").GoalResultResponse>;
+
 const postRunResponses: Record<string, PostRunContributionResponse> = {
   activity_counted: {
     screen: "post_run",
@@ -587,6 +669,16 @@ export function createMockCrewGoalsApi(): CrewGoalsApi {
         ...response,
         activityId
       };
+    },
+    async getGoalResult(goalId, signal) {
+      await waitFor(signal);
+      const response = goalResultResponses[goalId as keyof typeof goalResultResponses];
+
+      if (!response) {
+        throw new ApiError(`Mock goal result ${goalId} is unavailable`, 404);
+      }
+
+      return response;
     },
     async listInvites(signal) {
       await waitFor(signal);
