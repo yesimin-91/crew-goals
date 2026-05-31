@@ -43,7 +43,7 @@ function getAvailabilityCopy(reason?: InviteAvailabilityReason) {
         label: "Ready to review",
         tone: "positive" as const,
         description:
-          "Open the invite to review the goal and decide later. Join and ignore actions can plug in during the next phase."
+          "Review the goal, then join now or choose not now without adding social pressure."
       };
   }
 }
@@ -70,8 +70,13 @@ export function mapInviteListItem(item: InviteListItem) {
 export function mapInviteDetailView(invite: InviteDetail) {
   const availability = getAvailabilityCopy(invite.availabilityReason);
   const isUnavailable =
-    invite.status === "invalid" &&
-    invite.availabilityReason !== "active_goal_conflict";
+    invite.availabilityReason === "full" ||
+    invite.availabilityReason === "completed" ||
+    invite.availabilityReason === "expired" ||
+    invite.availabilityReason === "ignored" ||
+    invite.status === "ignored" ||
+    (invite.status === "invalid" &&
+      invite.availabilityReason !== "active_goal_conflict");
   const isConflict = invite.availabilityReason === "active_goal_conflict";
 
   return {
@@ -92,6 +97,8 @@ export function mapInviteDetailView(invite: InviteDetail) {
     availabilityTone: availability.tone,
     isUnavailable,
     isConflict,
+    isAccepted: invite.status === "accepted",
+    canAct: !isUnavailable && !isConflict && invite.status === "pending",
     currentUserActiveGoalId: invite.currentUserActiveGoalId
   };
 }

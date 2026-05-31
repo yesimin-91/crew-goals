@@ -10,6 +10,7 @@ import {
   mapInvitesListResponse
 } from "../services/apiContracts";
 import type {
+  AcceptInviteResponse,
   CreateGoalResponse,
   GoalDistanceRecommendationResponse,
   GoalRecommendationTier,
@@ -18,6 +19,7 @@ import type {
   HomeEntryResponse,
   InviteDetailResponse,
   InvitesListResponse,
+  IgnoreInviteResponse,
   GoalReadResponse
 } from "../../../../packages/shared/src/index";
 
@@ -155,52 +157,44 @@ const goalDetailResponse: GoalDetailResponse = {
   actions: []
 };
 
-const inviteListResponse: InvitesListResponse = {
-  screen: "invites_list",
-  title: "Crew Goal Invites",
-  subtitle: "Pending, blocked, and unavailable invite states are all resolved by the API from the goal status and your active-goal eligibility.",
-  items: [
-    {
-      inviteId: "invite-joinable",
-      goalId: "goal-sam-weekly",
-      title: "Sam + Iris Crew",
-      inviter: { id: "sam", displayName: "Sam Rivera", avatarUrl: "/mock/avatars/sam.png" },
-      targetDistanceKm: 42,
-      durationDays: 7,
-      currentJoinedMemberCount: 2,
-      pendingInviteCount: 1,
-      status: "pending",
-      availability: "joinable",
-      statusLabel: "Waiting for your response",
-      distanceLabel: "42 km in 7 days",
-      sentAt: "2026-05-25T06:03:00.000Z",
-      expiresAt: "2026-06-02T06:00:00.000Z",
-      currentMembersLabel: "2 joined, 1 pending"
-    },
-    {
-      inviteId: "invite-conflict",
-      goalId: "goal-kai-weekly",
-      title: "Kai + 2 Crew",
-      inviter: { id: "kai", displayName: "Kai Morgan", avatarUrl: "/mock/avatars/kai.png" },
-      targetDistanceKm: 60,
-      durationDays: 7,
-      currentJoinedMemberCount: 3,
-      pendingInviteCount: 1,
-      status: "pending",
-      availability: "blocked",
-      statusLabel: "Join unavailable while your current goal is active",
-      distanceLabel: "60 km in 7 days",
-      sentAt: "2026-05-25T06:03:00.000Z",
-      expiresAt: "2026-06-01T20:00:00.000Z",
-      currentMembersLabel: "3 joined, 1 pending"
-    }
-  ]
-};
+type MockInviteListItemBase = Omit<
+  InvitesListResponse["items"][number],
+  "status" | "availability" | "statusLabel"
+>;
 
-const inviteDetailResponse: InviteDetailResponse = {
+const inviteJoinableBase = {
+  inviteId: "invite-joinable",
+  goalId: "goal-sam-weekly",
+  title: "Sam + Iris Crew",
+  inviter: { id: "sam", displayName: "Sam Rivera", avatarUrl: "/mock/avatars/sam.png" },
+  targetDistanceKm: 42,
+  durationDays: 7,
+  currentJoinedMemberCount: 2,
+  pendingInviteCount: 1,
+  distanceLabel: "42 km in 7 days",
+  sentAt: "2026-05-25T06:03:00.000Z",
+  expiresAt: "2026-06-02T06:00:00.000Z",
+  currentMembersLabel: "2 joined, 1 pending"
+} satisfies MockInviteListItemBase;
+
+const inviteConflictBase = {
+  inviteId: "invite-conflict",
+  goalId: "goal-kai-weekly",
+  title: "Kai + 2 Crew",
+  inviter: { id: "kai", displayName: "Kai Morgan", avatarUrl: "/mock/avatars/kai.png" },
+  targetDistanceKm: 60,
+  durationDays: 7,
+  currentJoinedMemberCount: 3,
+  pendingInviteCount: 1,
+  distanceLabel: "60 km in 7 days",
+  sentAt: "2026-05-25T06:03:00.000Z",
+  expiresAt: "2026-06-01T20:00:00.000Z",
+  currentMembersLabel: "3 joined, 1 pending"
+} satisfies MockInviteListItemBase;
+
+const inviteJoinableDetailBase = {
   screen: "invite_detail",
   inviteId: "invite-joinable",
-  status: "pending",
   inviter: { id: "sam", displayName: "Sam Rivera", avatarUrl: "/mock/avatars/sam.png" },
   goal: {
     goalId: "goal-sam-weekly",
@@ -224,9 +218,173 @@ const inviteDetailResponse: InviteDetailResponse = {
     "Only runs completed after you join can count toward this crew goal.",
     "Eligible Run and Trail Run activities add automatically after sync."
   ]
+} satisfies Omit<InviteDetailResponse, "status">;
+
+const goalDetailResponses: Record<string, GoalReadResponse> = {
+  "goal-nora-weekly": goalDetailResponse,
+  "goal-sam-weekly": {
+    ...goalDetailResponse,
+    goalId: "goal-sam-weekly",
+    title: "Sam + Iris Crew",
+    progress: {
+      totalDistanceKm: 12.4,
+      targetDistanceKm: 42,
+      percentComplete: 29.5,
+      remainingDistanceKm: 29.6,
+      trackState: "on_track",
+      statusLabel: "On track"
+    },
+    timeline: {
+      startTime: "2026-05-26T06:00:00.000Z",
+      endTime: "2026-06-02T06:00:00.000Z",
+      totalDays: 7,
+      daysLeft: 3,
+      hoursLeft: 72,
+      remainingLabel: "3 days left"
+    },
+    myContributionKm: 4.2,
+    crew: {
+      joinedMemberCount: 2,
+      pendingInviteCount: 1,
+      crewLimit: 3
+    },
+    members: [
+      {
+        id: "sam",
+        displayName: "Sam Rivera",
+        avatarUrl: "/mock/avatars/sam.png",
+        role: "creator",
+        joinedAt: "2026-05-26T06:00:00.000Z",
+        contributionKm: 8.2,
+        contributionLabel: "8.2 km contributed"
+      },
+      {
+        id: "mia",
+        displayName: "Mia Chen",
+        avatarUrl: "/mock/avatars/mia.png",
+        role: "member",
+        joinedAt: "2026-05-27T04:30:00.000Z",
+        contributionKm: 4.2,
+        contributionLabel: "4.2 km contributed"
+      }
+    ],
+    pendingInvites: [
+      {
+        inviteId: "invite-jules",
+        invitee: {
+          id: "jules",
+          displayName: "Jules Park",
+          avatarUrl: "/mock/avatars/jules.png"
+        },
+        status: "pending",
+        sentAt: "2026-05-26T06:03:00.000Z",
+        expiresAt: "2026-06-02T06:00:00.000Z"
+      }
+    ],
+    recentActivity: [
+      {
+        activityId: "activity-2",
+        member: {
+          id: "sam",
+          displayName: "Sam Rivera",
+          avatarUrl: "/mock/avatars/sam.png"
+        },
+        activityType: "trail_run",
+        distanceKm: 4.2,
+        happenedAt: "2026-05-29T02:10:00.000Z",
+        syncedAt: "2026-05-29T02:10:00.000Z",
+        relativeSyncLabel: "1 hour ago"
+      }
+    ]
+  }
 };
 
-const goalReadResponse: GoalReadResponse = goalDetailResponse;
+const inviteDetailResponses: Record<string, InviteDetailResponse> = {
+  "invite-joinable": {
+    ...inviteJoinableDetailBase,
+    status: "pending"
+  },
+  "invite-conflict": {
+    screen: "invite_detail",
+    inviteId: "invite-conflict",
+    status: "pending",
+    inviter: { id: "kai", displayName: "Kai Morgan", avatarUrl: "/mock/avatars/kai.png" },
+    goal: {
+      goalId: "goal-kai-weekly",
+      title: "Kai + 2 Crew",
+      targetDistanceKm: 60,
+      durationDays: 7,
+      currentJoinedMemberCount: 3,
+      pendingInviteCount: 1,
+      startTime: "2026-05-25T06:00:00.000Z",
+      endTime: "2026-06-01T20:00:00.000Z"
+    },
+    availability: {
+      state: "blocked",
+      reasonCode: "active_goal_conflict",
+      currentUserActiveGoalId: "goal-nora-weekly",
+      headline: "Join unavailable while your current goal is active",
+      body: "You already have an active goal, so this invite is view-only until that goal ends.",
+      primaryAction: { label: "View active goal", href: "/goals/goal-nora-weekly", kind: "primary" },
+      secondaryAction: { label: "Not now", href: "/invites", kind: "ghost" }
+    },
+    rules: [
+      "The goal starts immediately when invites are sent.",
+      "Only runs completed after you join can count toward this crew goal.",
+      "Eligible Run and Trail Run activities add automatically after sync."
+    ]
+  }
+};
+
+let mockInviteStatusById: Record<string, "pending" | "accepted" | "ignored"> = {
+  "invite-joinable": "pending",
+  "invite-conflict": "pending"
+};
+
+function getInviteStatus(inviteId: string) {
+  return mockInviteStatusById[inviteId] ?? "pending";
+}
+
+function getInviteListResponse(): InvitesListResponse {
+  const joinableStatus = getInviteStatus("invite-joinable");
+  const conflictStatus = getInviteStatus("invite-conflict");
+  const items: InvitesListResponse["items"] = [
+    {
+      ...inviteJoinableBase,
+      status: joinableStatus,
+      availability: "joinable",
+      statusLabel: joinableStatus === "ignored" ? "Invite closed" : "Waiting for your response"
+    },
+    {
+      ...inviteConflictBase,
+      status: conflictStatus,
+      availability: "blocked",
+      statusLabel:
+        conflictStatus === "ignored"
+          ? "Invite closed"
+          : "Join unavailable while your current goal is active"
+    }
+  ];
+
+  return {
+    screen: "invites_list",
+    title: "Crew Goal Invites",
+    subtitle: "Pending, blocked, and unavailable invite states are all resolved by the API from the goal status and your active-goal eligibility.",
+    items: items.filter((item) => item.status !== "accepted")
+  };
+}
+
+function getInviteDetailResponse(inviteId: string): InviteDetailResponse | null {
+  const base = inviteDetailResponses[inviteId];
+  if (!base) {
+    return null;
+  }
+
+  return {
+    ...base,
+    status: getInviteStatus(inviteId)
+  };
+}
 
 function waitFor(signal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -251,31 +409,70 @@ export function createMockCrewGoalsApi(): CrewGoalsApi {
     },
     async getGoalDetail(goalId, signal) {
       await waitFor(signal);
-      if (goalId !== goalDetailResponse.goalId) {
+      const response = goalDetailResponses[goalId];
+      if (!response) {
         throw new ApiError(`Mock goal ${goalId} is unavailable`, 404);
       }
 
-      return mapGoalReadResponse(goalReadResponse);
+      return mapGoalReadResponse(response);
     },
     async getRecentActivities(goalId, signal) {
       await waitFor(signal);
-      if (goalId !== goalDetailResponse.goalId) {
+      const response = goalDetailResponses[goalId];
+      if (!response) {
         return [];
       }
 
-      return mapGoalRecentActivity(goalReadResponse).map((activity) => activity);
+      return mapGoalRecentActivity(response).map((activity) => activity);
     },
     async listInvites(signal) {
       await waitFor(signal);
-      return mapInvitesListResponse(inviteListResponse);
+      return mapInvitesListResponse(getInviteListResponse());
     },
     async getInvite(inviteId, signal) {
       await waitFor(signal);
-      if (inviteId !== inviteDetailResponse.inviteId) {
+      const response = getInviteDetailResponse(inviteId);
+      if (!response) {
         throw new ApiError(`Mock invite ${inviteId} is unavailable`, 404);
       }
 
-      return mapInviteDetailResponse(inviteDetailResponse);
+      return mapInviteDetailResponse(response);
+    },
+    async acceptInvite(inviteId) {
+      await waitFor();
+      const response = getInviteDetailResponse(inviteId);
+      if (!response) {
+        throw new ApiError(`Mock invite ${inviteId} is unavailable`, 404, "not_found");
+      }
+
+      mockInviteStatusById = {
+        ...mockInviteStatusById,
+        [inviteId]: "accepted"
+      };
+
+      return {
+        screen: "invite_accepted",
+        inviteId,
+        goalId: response.goal.goalId,
+        detailHref: `/goals/${response.goal.goalId}`
+      } satisfies AcceptInviteResponse;
+    },
+    async ignoreInvite(inviteId) {
+      await waitFor();
+      const response = getInviteDetailResponse(inviteId);
+      if (!response) {
+        throw new ApiError(`Mock invite ${inviteId} is unavailable`, 404, "not_found");
+      }
+
+      mockInviteStatusById = {
+        ...mockInviteStatusById,
+        [inviteId]: "ignored"
+      };
+
+      return {
+        screen: "invite_ignored",
+        inviteId
+      } satisfies IgnoreInviteResponse;
     },
     async getGoalDistanceRecommendation(selectedFriendIds, signal) {
       await waitFor(signal);

@@ -1,6 +1,10 @@
 import { fetchJson } from "./http";
-import type { InviteDetail, InviteListItem } from "../types/crewGoals";
-import type { InviteDetailResponse, InvitesListResponse } from "../../../../packages/shared/src/index";
+import type {
+  AcceptInviteResponse as AcceptInviteResponseDto,
+  IgnoreInviteResponse as IgnoreInviteResponseDto,
+  InviteDetailResponse,
+  InvitesListResponse
+} from "../../../../packages/shared/src/index";
 import {
   mapInviteDetailResponse,
   mapInvitesListResponse
@@ -16,4 +20,16 @@ export async function getInvite(inviteId: string, signal?: AbortSignal) {
     signal
   });
   return mapInviteDetailResponse(response);
+}
+
+export async function acceptInvite(inviteId: string) {
+  return fetchJson<AcceptInviteResponseDto>(`/api/invites/${inviteId}/accept`, {
+    method: "POST"
+  });
+}
+
+export async function ignoreInvite(inviteId: string) {
+  return fetchJson<IgnoreInviteResponseDto>(`/api/invites/${inviteId}/ignore`, {
+    method: "POST"
+  });
 }

@@ -5,10 +5,11 @@ import {
 } from "./createGoalService";
 import { getGoalDetail, getActiveGoalSummary } from "./goalService";
 import { getHomeEntryOverview } from "./homeService";
-import { getInvite, listInvites } from "./inviteService";
+import { acceptInvite, getInvite, ignoreInvite, listInvites } from "./inviteService";
 import { createMockCrewGoalsApi } from "../mocks/mockCrewGoalsApi";
 import type {
   EntryOverview,
+  AcceptInviteResponse,
   CreateGoalResponse,
   GoalDistanceRecommendationResponse,
   GoalRecommendationTier,
@@ -16,6 +17,7 @@ import type {
   GoalSummary,
   InviteDetail,
   InviteListItem,
+  IgnoreInviteResponse,
   RecentActivity
 } from "../types/crewGoals";
 
@@ -26,6 +28,8 @@ export interface CrewGoalsApi {
   getRecentActivities(goalId: string, signal?: AbortSignal): Promise<RecentActivity[]>;
   listInvites(signal?: AbortSignal): Promise<InviteListItem[]>;
   getInvite(inviteId: string, signal?: AbortSignal): Promise<InviteDetail>;
+  acceptInvite(inviteId: string): Promise<AcceptInviteResponse>;
+  ignoreInvite(inviteId: string): Promise<IgnoreInviteResponse>;
   getGoalDistanceRecommendation(
     selectedFriendIds: string[],
     signal?: AbortSignal
@@ -44,6 +48,8 @@ export function createHttpCrewGoalsApi(): CrewGoalsApi {
     getRecentActivities,
     listInvites,
     getInvite,
+    acceptInvite,
+    ignoreInvite,
     getGoalDistanceRecommendation,
     createGoal
   };

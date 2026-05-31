@@ -461,7 +461,7 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
       .prepare(
         `SELECT *
          FROM goal_invites
-         WHERE invitee_id = ?
+         WHERE invitee_id = ? AND status != 'accepted'
          ORDER BY created_at DESC`
       )
       .all(this.viewerId) as GoalInviteRow[];

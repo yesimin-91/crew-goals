@@ -1,10 +1,14 @@
 export class ApiError extends Error {
   status: number;
+  code?: string;
+  details?: unknown;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, code?: string, details?: unknown) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -26,7 +30,38 @@ export async function fetchJson<T>(input: string, init?: JsonRequestOptions): Pr
   });
 
   if (!response.ok) {
-    throw new ApiError(`Request failed with status ${response.status}`, response.status);
+    const text = await response.text();
+    let details: unknown = null;
+    let message = `Request failed with status ${response.status}`;
+    let code: string | undefined;
+
+    if (text) {
+      try {
+        details = JSON.parse(text) as unknown;
+      } catch {
+        details = text;
+      }
+
+      if (
+        details &&
+        typeof details === "object" &&
+        "message" in details &&
+        typeof (details as { message?: unknown }).message === "string"
+      ) {
+        message = (details as { message: string }).message;
+      }
+
+      if (
+        details &&
+        typeof details === "object" &&
+        "code" in details &&
+        typeof (details as { code?: unknown }).code === "string"
+      ) {
+        code = (details as { code: string }).code;
+      }
+    }
+
+    throw new ApiError(message, response.status, code, details);
   }
 
   return (await response.json()) as T;

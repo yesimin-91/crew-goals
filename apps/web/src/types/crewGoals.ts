@@ -1,10 +1,12 @@
 export type {
+  AcceptInviteResponse,
   CreateGoalResponse,
   EntryOverview,
   GoalDistanceRecommendationResponse,
   GoalRecommendationTier,
   GoalStatus,
   InviteStatus,
+  IgnoreInviteResponse,
   WebCompatGoalDetail as GoalDetail,
   WebCompatGoalMember as GoalMember,
   WebCompatGoalSummary as GoalSummary,
