@@ -1,8 +1,9 @@
+import { ActionLink } from "../components/Action";
 import { EmptyState, ErrorState, LoadingState } from "../components/ScreenState";
 import { PageHeader } from "../components/PageHeader";
 import { ProgressBar } from "../components/ProgressBar";
 import { useCrewGoalsApi } from "../app/CrewGoalsApiContext";
-import { appRoutes } from "../app/routes";
+import { appRoutes, buildPostRunPath } from "../app/routes";
 import { mapGoalDetailView } from "../features/goals/goalViewModels";
 import { useAsyncData } from "../hooks/useAsyncData";
 import { isNotFoundError } from "../lib/apiErrors";
@@ -169,6 +170,18 @@ export function GoalDetailPage() {
             <p>The first eligible run will move the team forward.</p>
           </article>
         )}
+
+        {state.data.recentActivities[0] ? (
+          <div className="inline-actions">
+            <ActionLink
+              block
+              tone="secondary"
+              to={buildPostRunPath(state.data.recentActivities[0].id)}
+            >
+              View latest post-run card
+            </ActionLink>
+          </div>
+        ) : null}
       </section>
     </div>
   );

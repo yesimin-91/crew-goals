@@ -1,5 +1,6 @@
 export type {
   AcceptInviteResponse,
+  ContributionSyncResponse,
   CreateGoalResponse,
   EntryOverview,
   GoalDistanceRecommendationResponse,
@@ -7,6 +8,7 @@ export type {
   GoalStatus,
   InviteStatus,
   IgnoreInviteResponse,
+  PostRunContributionResponse,
   WebCompatGoalDetail as GoalDetail,
   WebCompatGoalMember as GoalMember,
   WebCompatGoalSummary as GoalSummary,

@@ -11,6 +11,7 @@ import { HomePage } from "./pages/HomePage";
 import { InviteDetailPage } from "./pages/InviteDetailPage";
 import { InviteUnavailablePage } from "./pages/InviteUnavailablePage";
 import { InvitesPage } from "./pages/InvitesPage";
+import { PostRunPage } from "./pages/PostRunPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import "./styles.css";
 
@@ -32,6 +33,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               path="invites/:inviteId/unavailable"
               element={<InviteUnavailablePage />}
             />
+            <Route path="post-run/:activityId" element={<PostRunPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

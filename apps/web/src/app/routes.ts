@@ -18,3 +18,7 @@ export function buildInvitePath(inviteId: string) {
 export function buildInviteUnavailablePath(inviteId: string) {
   return `/invites/${inviteId}/unavailable`;
 }
+
+export function buildPostRunPath(activityId: string) {
+  return `/post-run/${activityId}`;
+}

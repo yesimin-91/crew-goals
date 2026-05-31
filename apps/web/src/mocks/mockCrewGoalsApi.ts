@@ -20,6 +20,7 @@ import type {
   InviteDetailResponse,
   InvitesListResponse,
   IgnoreInviteResponse,
+  PostRunContributionResponse,
   GoalReadResponse
 } from "../../../../packages/shared/src/index";
 
@@ -296,6 +297,139 @@ const goalDetailResponses: Record<string, GoalReadResponse> = {
         relativeSyncLabel: "1 hour ago"
       }
     ]
+  },
+  "goal-completed-weekly": {
+    ...goalDetailResponse,
+    goalId: "goal-completed-weekly",
+    title: "Mia + 2 Crew",
+    status: "completed",
+    progress: {
+      totalDistanceKm: 56,
+      targetDistanceKm: 56,
+      percentComplete: 100,
+      remainingDistanceKm: 0,
+      trackState: "completed",
+      statusLabel: "Goal completed"
+    },
+    timeline: {
+      startTime: "2026-05-23T06:00:00.000Z",
+      endTime: "2026-05-30T06:00:00.000Z",
+      totalDays: 7,
+      daysLeft: 0,
+      hoursLeft: 0,
+      remainingLabel: "Completed"
+    },
+    myContributionKm: 18.4,
+    crew: {
+      joinedMemberCount: 3,
+      pendingInviteCount: 0,
+      crewLimit: 3
+    },
+    members: [
+      {
+        id: "mia",
+        displayName: "Mia Chen",
+        avatarUrl: "/mock/avatars/mia.png",
+        role: "creator",
+        joinedAt: "2026-05-23T06:00:00.000Z",
+        contributionKm: 21.4,
+        contributionLabel: "21.4 km contributed"
+      },
+      {
+        id: "nora",
+        displayName: "Nora Lee",
+        avatarUrl: "/mock/avatars/nora.png",
+        role: "member",
+        joinedAt: "2026-05-23T08:30:00.000Z",
+        contributionKm: 18.4,
+        contributionLabel: "18.4 km contributed"
+      },
+      {
+        id: "sam",
+        displayName: "Sam Rivera",
+        avatarUrl: "/mock/avatars/sam.png",
+        role: "member",
+        joinedAt: "2026-05-24T03:20:00.000Z",
+        contributionKm: 16.2,
+        contributionLabel: "16.2 km contributed"
+      }
+    ],
+    pendingInvites: [],
+    recentActivity: [
+      {
+        activityId: "activity_goal_locked",
+        member: {
+          id: "nora",
+          displayName: "Nora Lee",
+          avatarUrl: "/mock/avatars/nora.png"
+        },
+        activityType: "run",
+        distanceKm: 6.1,
+        happenedAt: "2026-05-30T04:12:00.000Z",
+        syncedAt: "2026-05-30T04:18:00.000Z",
+        relativeSyncLabel: "locked"
+      }
+    ]
+  }
+};
+
+const postRunResponses: Record<string, PostRunContributionResponse> = {
+  activity_counted: {
+    screen: "post_run",
+    activityId: "activity_counted",
+    state: "counted",
+    message: "Contribution counted",
+    goal: {
+      goalId: "goal-nora-weekly",
+      title: "Mia + 2 Crew",
+      status: "active",
+      totalDistanceKm: 34.2,
+      targetDistanceKm: 56,
+      remainingDistanceKm: 21.8
+    }
+  },
+  activity_already_counted: {
+    screen: "post_run",
+    activityId: "activity_already_counted",
+    state: "already_counted",
+    message: "Already counted",
+    goal: {
+      goalId: "goal-nora-weekly",
+      title: "Mia + 2 Crew",
+      status: "active",
+      totalDistanceKm: 34.2,
+      targetDistanceKm: 56,
+      remainingDistanceKm: 21.8
+    }
+  },
+  activity_not_counted: {
+    screen: "post_run",
+    activityId: "activity_not_counted",
+    state: "not_counted",
+    message: "Could not update crew progress yet",
+    goal: {
+      goalId: "goal-nora-weekly",
+      title: "Mia + 2 Crew",
+      status: "active",
+      totalDistanceKm: 34.2,
+      targetDistanceKm: 56,
+      remainingDistanceKm: 21.8
+    }
+  },
+  activity_goal_locked: {
+    screen: "post_run",
+    activityId: "activity_goal_locked",
+    state: "goal_locked",
+    message: "Goal result is already locked",
+    goal: {
+      goalId: "goal-completed-weekly",
+      title: "Mia + 2 Crew",
+      status: "completed",
+      totalDistanceKm: 56,
+      targetDistanceKm: 56,
+      remainingDistanceKm: 0,
+      resultLockedAt: "2026-05-30T06:00:00.000Z"
+    }
   }
 };
 
@@ -424,6 +558,35 @@ export function createMockCrewGoalsApi(): CrewGoalsApi {
       }
 
       return mapGoalRecentActivity(response).map((activity) => activity);
+    },
+    async getPostRunContribution(activityId, signal) {
+      await waitFor(signal);
+
+      if (activityId === "activity_updating") {
+        return {
+          screen: "post_run",
+          activityId,
+          state: "updating",
+          message: "Updating crew progress"
+        };
+      }
+
+      const response =
+        postRunResponses[activityId] ??
+        (activityId === "activity-1"
+          ? postRunResponses.activity_counted
+          : activityId === "activity-2"
+            ? postRunResponses.activity_counted
+            : undefined);
+
+      if (!response) {
+        throw new ApiError(`Mock activity ${activityId} is unavailable`, 404);
+      }
+
+      return {
+        ...response,
+        activityId
+      };
     },
     async listInvites(signal) {
       await waitFor(signal);

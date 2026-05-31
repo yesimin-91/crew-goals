@@ -142,6 +142,49 @@ button {
     var(--surface);
 }
 
+.post-run-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.post-run-card--counted {
+  background:
+    linear-gradient(150deg, rgba(124, 232, 177, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(19, 43, 34, 0.92), rgba(8, 15, 23, 0.98));
+}
+
+.post-run-card--already_counted {
+  background:
+    linear-gradient(150deg, rgba(143, 169, 193, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(15, 23, 32, 0.92), rgba(8, 15, 23, 0.98));
+}
+
+.post-run-card--not_counted,
+.post-run-card--goal_locked {
+  background:
+    linear-gradient(150deg, rgba(255, 213, 128, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(28, 22, 12, 0.94), rgba(8, 15, 23, 0.98));
+}
+
+.post-run-card--updating {
+  background:
+    linear-gradient(150deg, rgba(117, 226, 255, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(11, 28, 40, 0.94), rgba(8, 15, 23, 0.98));
+}
+
+.post-run-card__mark {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
 .goals-summary-card {
   display: grid;
   gap: 18px;
