@@ -1,6 +1,7 @@
 import type Database from "better-sqlite3";
 
 import type {
+  CrewGoalAnalyticsEventRecord,
   ContributionIgnoredReason,
   GoalResultResponse,
   GoalRecommendationTier,
@@ -93,6 +94,16 @@ interface GoalContributionRow {
   counted_at: string;
   status: string;
   ignored_reason: string | null;
+}
+
+interface CrewGoalAnalyticsEventRow {
+  event_id: string;
+  event_name: string;
+  source: string;
+  goal_id: string | null;
+  user_id: string | null;
+  properties: string | null;
+  created_at: string;
 }
 
 export function seedCrewGoalsReadData(sqlite: Database.Database, now = new Date()) {
@@ -925,6 +936,18 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
 
     lockGoalResult(this.sqlite, goal.id, "expired", expiredAt, finalDistanceKm);
 
+    this.recordAnalyticsEvent({
+      eventId: `evt_crew_goal_expired_${goal.id}_${expiredAt}`,
+      eventName: "crew_goal_expired",
+      source: "system",
+      goalId: goal.id,
+      userId: this.viewerId,
+      properties: {
+        final_distance_km: finalDistanceKm
+      },
+      createdAt: expiredAt
+    });
+
     return {
       activityId: goal.id,
       status: "ignored",
@@ -932,6 +955,32 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
       goalId: goal.id,
       resultLockedAt: expiredAt
     };
+  }
+
+  recordAnalyticsEvent(event: CrewGoalAnalyticsEventRecord): CrewGoalAnalyticsEventRecord {
+    this.sqlite
+      .prepare(
+        `INSERT OR REPLACE INTO crew_goal_analytics_events (
+          event_id,
+          event_name,
+          source,
+          goal_id,
+          user_id,
+          properties,
+          created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        event.eventId,
+        event.eventName,
+        event.source,
+        event.goalId ?? null,
+        event.userId ?? null,
+        JSON.stringify(event.properties ?? {}),
+        event.createdAt
+      );
+
+    return event;
   }
 
   private getGoalContributionByActivityId(activityId: string): GoalContributionRow | undefined {
@@ -973,6 +1022,16 @@ export class SqliteCrewGoalsReadRepository implements CrewGoalsWriteRepository {
     );
 
     lockGoalResult(this.sqlite, goal.id, "expired", goal.endTime, finalDistanceKm);
+  }
+
+  listAnalyticsEvents(): CrewGoalAnalyticsEventRow[] {
+    return this.sqlite
+      .prepare(
+        `SELECT event_id, event_name, source, goal_id, user_id, properties, created_at
+         FROM crew_goal_analytics_events
+         ORDER BY created_at DESC`
+      )
+      .all() as CrewGoalAnalyticsEventRow[];
   }
 
   private toInviteRecord(row: GoalInviteRow): CrewInviteRecord {

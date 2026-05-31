@@ -64,3 +64,14 @@ export const goalContributions = sqliteTable("goal_contributions", {
   status: text("status").notNull(),
   ignoredReason: text("ignored_reason")
 });
+
+export const crewGoalAnalyticsEvents = sqliteTable("crew_goal_analytics_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  eventId: text("event_id").notNull().unique(),
+  eventName: text("event_name").notNull(),
+  source: text("source").notNull(),
+  goalId: text("goal_id"),
+  userId: text("user_id"),
+  properties: text("properties"),
+  createdAt: text("created_at").notNull()
+});

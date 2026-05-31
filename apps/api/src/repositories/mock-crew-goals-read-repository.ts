@@ -1,4 +1,5 @@
 import type {
+  CrewGoalAnalyticsEventRecord,
   GoalResultResponse,
   PostRunContributionResponse
 } from "../../../../packages/shared/src/index.js";
@@ -155,5 +156,9 @@ export class MockCrewGoalsReadRepository implements CrewGoalsReadRepository {
 
   getNow(): Date {
     return this.options.now ?? new Date();
+  }
+
+  recordAnalyticsEvent(event: CrewGoalAnalyticsEventRecord): CrewGoalAnalyticsEventRecord {
+    return event;
   }
 }

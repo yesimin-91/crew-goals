@@ -63,6 +63,17 @@ CREATE TABLE IF NOT EXISTS goal_contributions (
   ignored_reason TEXT
 );
 
+CREATE TABLE IF NOT EXISTS crew_goal_analytics_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  event_id TEXT NOT NULL UNIQUE,
+  event_name TEXT NOT NULL,
+  source TEXT NOT NULL,
+  goal_id TEXT,
+  user_id TEXT,
+  properties TEXT,
+  created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS app_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL

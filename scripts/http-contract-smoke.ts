@@ -4,10 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { createGoalService } from "../apps/api/src/modules/goals/create-goal-service.js";
+import { createContributionService } from "../apps/api/src/modules/contributions/contribution-service.js";
 import { createGoalsService } from "../apps/api/src/modules/goals/goals-service.js";
 import { createHomeEntryService } from "../apps/api/src/modules/home/home-entry-service.js";
 import { createInviteActionsService } from "../apps/api/src/modules/invites/invite-actions-service.js";
 import { createInvitesService } from "../apps/api/src/modules/invites/invites-service.js";
+import { createOperationsService } from "../apps/api/src/modules/operations/operations-service.js";
 import { createRecommendationsService } from "../apps/api/src/modules/recommendations/recommendations-service.js";
 import { MockCrewGoalsReadRepository } from "../apps/api/src/repositories/mock-crew-goals-read-repository.js";
 import {
@@ -184,6 +186,46 @@ async function main() {
   });
   assert.equal(ignoreResponse.statusCode, 200, "ignore invite should succeed");
 
+  const analyticsEventResponse = await app.inject({
+    method: "POST",
+    url: "/api/analytics/events",
+    payload: {
+      eventName: "crew_goal_entry_click",
+      source: "home",
+      goalId: "goal_active_mia_crew",
+      properties: {
+        cta: "start_goal"
+      }
+    }
+  });
+  assert.equal(analyticsEventResponse.statusCode, 200, "analytics event status");
+  assert.equal(
+    analyticsEventResponse.json().eventName,
+    "crew_goal_entry_click",
+    "analytics event name"
+  );
+
+  const notificationPreviewResponse = await app.inject({
+    method: "POST",
+    url: "/api/notifications/preview",
+    payload: {
+      trigger: "goal_completed",
+      goalId: "goal_active_mia_crew",
+      recipientId: "mia"
+    }
+  });
+  assert.equal(notificationPreviewResponse.statusCode, 200, "notification preview status");
+  assert.equal(
+    notificationPreviewResponse.json().screen,
+    "notification_preview",
+    "notification preview screen"
+  );
+  assert.equal(
+    notificationPreviewResponse.json().deepLink,
+    "/results/goal_active_mia_crew/completed",
+    "notification preview deeplink"
+  );
+
   const countedContribution = await app.inject({
     method: "POST",
     url: "/api/contributions/sync",
@@ -278,14 +320,12 @@ async function main() {
     now,
     viewerId: "mia"
   });
-  goalResultRepository.syncContribution({
+  createContributionService(goalResultRepository).syncContribution({
     activityId: "act_sync_004",
-    userId: "mia",
     distanceKm: 50,
     activityType: "run",
     activitySource: "suunto",
-    activityEndTime: "2026-05-29T10:00:00.000Z",
-    syncedAt: now.toISOString()
+    activityEndTime: "2026-05-29T10:00:00.000Z"
   });
   const goalResultApp = createServer({
     now: () => now,
@@ -298,6 +338,16 @@ async function main() {
   });
   assert.equal(goalResultResponse.statusCode, 200, "goal result route status");
   assert.equal(goalResultResponse.json().screen, "goal_result", "goal result route screen");
+  const goalResultAnalytics = goalResultDb.sqlite
+    .prepare(
+      `SELECT event_name, source, goal_id
+       FROM crew_goal_analytics_events
+       WHERE event_name = ?`
+    )
+    .get("crew_goal_completed") as { event_name: string; source: string; goal_id: string };
+  assert.equal(goalResultAnalytics.event_name, "crew_goal_completed", "goal completed event logged");
+  assert.equal(goalResultAnalytics.source, "postrun", "goal completed source");
+  assert.equal(goalResultAnalytics.goal_id, "goal_active_mia_crew", "goal completed goal id");
   await goalResultApp.close();
   goalResultDb.sqlite.close();
 
@@ -324,6 +374,39 @@ async function main() {
     "default server path should evaluate time per request"
   );
   await timeAwareApp.close();
+
+  const analyticsDbDir = mkdtempSync(join(tmpdir(), "crew-goals-analytics-"));
+  const analyticsDb = createDatabase(join(analyticsDbDir, "crew-goals.sqlite"));
+  seedCrewGoalsReadData(analyticsDb.sqlite, now);
+  const operationsRepository = new SqliteCrewGoalsReadRepository(analyticsDb.sqlite, {
+    now,
+    viewerId: "mia"
+  });
+  createOperationsService(operationsRepository).recordAnalyticsEvent({
+    eventName: "crew_goal_detail_view",
+    source: "goals_hub",
+    goalId: "goal_active_mia_crew",
+    properties: {
+      source: "goals_hub"
+    }
+  });
+  const storedAnalytics = analyticsDb.sqlite
+    .prepare(
+      `SELECT event_name, source, goal_id, user_id
+       FROM crew_goal_analytics_events
+       WHERE event_name = ?`
+    )
+    .get("crew_goal_detail_view") as {
+    event_name: string;
+    source: string;
+    goal_id: string;
+    user_id: string;
+  };
+  assert.equal(storedAnalytics.event_name, "crew_goal_detail_view", "analytics stored event");
+  assert.equal(storedAnalytics.source, "goals_hub", "analytics stored source");
+  assert.equal(storedAnalytics.goal_id, "goal_active_mia_crew", "analytics stored goal");
+  assert.equal(storedAnalytics.user_id, "mia", "analytics default user");
+  analyticsDb.sqlite.close();
 
   await app.close();
 

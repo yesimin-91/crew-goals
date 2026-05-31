@@ -41,6 +41,18 @@ export function createInviteActionsService(repository: CrewGoalsWriteRepository)
 
       const result = runInviteWrite(() => repository.acceptInvite(inviteId));
 
+      repository.recordAnalyticsEvent({
+        eventId: `evt_crew_goal_invite_accepted_${inviteId}`,
+        eventName: "crew_goal_invite_accepted",
+        source: "invite",
+        goalId: result.goalId,
+        userId: repository.getViewer().id,
+        properties: {
+          invite_id: inviteId
+        },
+        createdAt: repository.getNow().toISOString()
+      });
+
       return {
         screen: "invite_accepted",
         inviteId: result.inviteId,
@@ -63,6 +75,18 @@ export function createInviteActionsService(repository: CrewGoalsWriteRepository)
       }
 
       runInviteWrite(() => repository.ignoreInvite(inviteId));
+
+      repository.recordAnalyticsEvent({
+        eventId: `evt_crew_goal_invite_ignored_${inviteId}`,
+        eventName: "crew_goal_invite_ignored",
+        source: "invite",
+        goalId: invite.goalId,
+        userId: repository.getViewer().id,
+        properties: {
+          invite_id: inviteId
+        },
+        createdAt: repository.getNow().toISOString()
+      });
 
       return {
         screen: "invite_ignored",

@@ -35,3 +35,4 @@ coverage/
 
 # Local Codex/smoke-test compilation outputs
 .codex-smoke-*/
+.tmp-smoke/

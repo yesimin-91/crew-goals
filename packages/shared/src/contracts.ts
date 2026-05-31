@@ -329,6 +329,85 @@ export interface ContributionSyncResponse {
   goal?: ContributionGoalSnapshot;
 }
 
+export type CrewGoalAnalyticsEventName =
+  | "crew_goal_entry_impression"
+  | "crew_goal_entry_click"
+  | "crew_goal_create_start"
+  | "crew_goal_friend_select_complete"
+  | "crew_goal_recommendation_selected"
+  | "crew_goal_invite_sent"
+  | "crew_goal_invite_opened"
+  | "crew_goal_invite_accepted"
+  | "crew_goal_invite_ignored"
+  | "crew_goal_invite_blocked_active_goal"
+  | "crew_goal_detail_view"
+  | "crew_goal_postrun_card_view"
+  | "crew_goal_postrun_card_click"
+  | "crew_goal_contribution_counted"
+  | "crew_goal_contribution_ineligible"
+  | "crew_goal_completed"
+  | "crew_goal_expired"
+  | "crew_goal_share_progress"
+  | "crew_goal_share_result"
+  | "crew_goal_restart";
+
+export type CrewGoalAnalyticsSource =
+  | "home"
+  | "goals_hub"
+  | "create"
+  | "preview"
+  | "invite"
+  | "postrun"
+  | "result"
+  | "notification"
+  | "system";
+
+export type CrewGoalAnalyticsProperties = Record<
+  string,
+  string | number | boolean | null
+>;
+
+export interface CrewGoalAnalyticsEventRequest {
+  eventName: CrewGoalAnalyticsEventName;
+  source: CrewGoalAnalyticsSource;
+  goalId?: string;
+  userId?: string;
+  properties?: CrewGoalAnalyticsProperties;
+}
+
+export interface CrewGoalAnalyticsEventRecord extends CrewGoalAnalyticsEventRequest {
+  eventId: string;
+  createdAt: string;
+}
+
+export type CrewGoalNotificationTrigger =
+  | "invite_sent"
+  | "invite_accepted"
+  | "goal_24h_left"
+  | "goal_completed"
+  | "goal_expired";
+
+export type CrewGoalNotificationChannel = "in_app" | "push";
+
+export interface CrewGoalNotificationPreviewRequest {
+  trigger: CrewGoalNotificationTrigger;
+  goalId: string;
+  recipientId?: string;
+  source?: CrewGoalAnalyticsSource;
+}
+
+export interface CrewGoalNotificationPreviewResponse {
+  screen: "notification_preview";
+  trigger: CrewGoalNotificationTrigger;
+  channel: CrewGoalNotificationChannel;
+  goalId: string;
+  recipientId: string;
+  title: string;
+  body: string;
+  deepLink: string;
+  createdAt: string;
+}
+
 export interface GoalResultMember {
   id: string;
   displayName: string;

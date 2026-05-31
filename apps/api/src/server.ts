@@ -16,6 +16,7 @@ import { registerGoalRoutes } from "./routes/goals-routes.js";
 import { registerContributionRoutes } from "./routes/contributions-routes.js";
 import { registerHomeRoutes } from "./routes/home-routes.js";
 import { registerInviteRoutes } from "./routes/invites-routes.js";
+import { registerOperationsRoutes } from "./routes/operations-routes.js";
 
 export function createServer(
   options: {
@@ -65,6 +66,7 @@ export function createServer(
   void registerGoalRoutes(app, createReadRepository, createDbRepository);
   void registerContributionRoutes(app, createDbRepository);
   void registerInviteRoutes(app, createReadRepository, createDbRepository);
+  void registerOperationsRoutes(app, () => createReadRepository(), createDbRepository);
 
   return app;
 }

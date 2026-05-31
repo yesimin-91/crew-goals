@@ -20,6 +20,24 @@ export function createContributionService(repository: CrewGoalsWriteRepository) 
 
       if (result.status === "counted") {
         const goal = result.goalId ? repository.getGoalById(result.goalId) : null;
+        const eventName = result.completedGoalId
+          ? "crew_goal_completed"
+          : "crew_goal_contribution_counted";
+
+        repository.recordAnalyticsEvent({
+          eventId: `evt_${eventName}_${request.activityId}`,
+          eventName,
+          source: "postrun",
+          goalId: result.goalId,
+          userId: repository.getViewer().id,
+          properties: {
+            activity_id: request.activityId,
+            activity_type: request.activityType,
+            activity_distance_km: request.distanceKm,
+            activity_source: request.activitySource
+          },
+          createdAt: repository.getNow().toISOString()
+        });
 
         return {
           screen: "contribution_sync",
@@ -47,6 +65,22 @@ export function createContributionService(repository: CrewGoalsWriteRepository) 
             : undefined
         };
       }
+
+      repository.recordAnalyticsEvent({
+        eventId: `evt_crew_goal_contribution_ineligible_${request.activityId}`,
+        eventName: "crew_goal_contribution_ineligible",
+        source: "postrun",
+        goalId: result.goalId,
+        userId: repository.getViewer().id,
+        properties: {
+          activity_id: request.activityId,
+          activity_type: request.activityType,
+          activity_distance_km: request.distanceKm,
+          activity_source: request.activitySource,
+          ineligible_reason: result.reasonCode ?? null
+        },
+        createdAt: repository.getNow().toISOString()
+      });
 
       return {
         screen: "contribution_sync",

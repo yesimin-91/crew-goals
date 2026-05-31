@@ -59,6 +59,21 @@ export function createGoalService(repository: CrewGoalsWriteRepository) {
         createdAt: startTime
       });
 
+      repository.recordAnalyticsEvent({
+        eventId: `evt_crew_goal_create_start_${goalId}`,
+        eventName: "crew_goal_create_start",
+        source: "create",
+        goalId,
+        userId: repository.getViewer().id,
+        properties: {
+          selected_friend_count: selectedFriendIds.length,
+          selected_tier: request.selectedTier,
+          recommended_distance_km: selectedOption.distanceKm,
+          recommendation_source: recommendation.source
+        },
+        createdAt: startTime
+      });
+
       return {
         screen: "goal_created",
         goalId: result.goalId,

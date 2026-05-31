@@ -1,4 +1,5 @@
 import type {
+  CrewGoalAnalyticsEventRecord,
   ContributionIgnoredReason,
   ContributionStatus,
   GoalResultResponse,
@@ -144,4 +145,5 @@ export interface CrewGoalsWriteRepository extends CrewGoalsReadRepository {
   syncContribution(input: SyncContributionInput): SyncContributionResult;
   ignoreContribution(input: IgnoredContributionInput): SyncContributionResult;
   expireActiveGoal(goalId: string): SyncContributionResult;
+  recordAnalyticsEvent(event: CrewGoalAnalyticsEventRecord): CrewGoalAnalyticsEventRecord;
 }
